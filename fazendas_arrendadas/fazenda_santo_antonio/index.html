@@ -1,0 +1,1434 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <link rel="stylesheet" href="css/leaflet.css">
+        <link rel="stylesheet" href="css/L.Control.Layers.Tree.css">
+        <link rel="stylesheet" href="css/L.Control.Locate.min.css">
+        <link rel="stylesheet" href="css/qgis2web.css">
+        <link rel="stylesheet" href="css/fontawesome-all.min.css">
+        <link rel="stylesheet" href="css/leaflet.photon.css">
+        <link rel="stylesheet" href="css/leaflet-measure.css">
+        
+<style>
+        html, body, #map {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+        }
+
+        /* ====== Custom UI (desktop + mobile) ====== */
+        .map-title{
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            max-width: calc(100% - 20px);
+            pointer-events: none;
+            font-family: Arial, Helvetica, sans-serif;
+            color: #111;
+            text-align: center;
+        }
+        .map-title .box{
+            display: inline-block;
+            background: rgba(255,255,255,0.92);
+            border: 1px solid rgba(0,0,0,0.25);
+            border-radius: 8px;
+            padding: 8px 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+        }
+        .map-title .t1{
+            font-weight: 700;
+            font-size: 16px;
+            line-height: 1.2;
+            margin: 0;
+        }
+        .map-title .t2{
+            font-weight: 600;
+            font-size: 13px;
+            line-height: 1.2;
+            margin-top: 4px;
+        }
+
+        .map-logo{
+            position: absolute;
+            right: 10px;
+            bottom: 20px;
+            z-index: 1000;
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            padding: 0;
+            box-shadow: none;
+        }
+        .map-logo img{
+            display: block;
+            width: 150px;
+            height: auto;
+            max-width: 32vw;
+            opacity: 1;
+        }
+
+        /* Home (recenter) control */
+        .leaflet-control-home a{
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            text-align: center;
+            display: block;
+            color: #111;
+            background: #fff;
+        }
+        .leaflet-control-home a:hover{
+            background: #f3f3f3;
+        }
+
+        /* Matrículas label background (tooltip) */
+        .css_Matrculas_25{
+            background: transparent !important; /* let inner div handle background */
+            border: none !important;
+            box-shadow: none !important;
+        }
+        .matricula-label{
+            background: rgba(255,255,255,0.92);
+            border: 1px solid rgba(0,0,0,0.25);
+            border-radius: 6px;
+            padding: 2px 6px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.20);
+            white-space: nowrap;
+        }
+
+
+        /* Toggle Matrículas labels */
+        body.hide-matriculas-labels .css_Matrculas_25{
+            display: none !important;
+        }
+
+        /* Mobile tweaks */
+        @media (max-width: 768px){
+            .map-title{
+                top: 8px;
+            }
+            .map-title .t1{
+                font-size: 14px;
+            }
+            .map-title .t2{
+                font-size: 12px;
+            }
+            .map-logo img{
+            display: block;
+            width: 150px;
+            height: auto;
+            max-width: 32vw;
+            opacity: 1;
+        }
+            .leaflet-control-home a{
+                width: 34px;
+                height: 34px;
+                line-height: 34px;
+            }
+        }
+        </style>
+
+        <title></title>
+    </head>
+    <body>
+        <div id="map">
+        </div>
+        <div class="map-title" aria-hidden="true">
+            <div class="box">
+                <div class="t1">Fazenda Santo Antônio - Santa Lúcia Madeiras</div>
+                <div class="t2">Voo 01: Jan/2026</div>
+            </div>
+        </div>
+        <div class="map-logo" aria-hidden="true">
+            <img src="images/logo-site-final-2.png" alt="Santa Lúcia Madeiras" />
+        </div>
+        <script src="js/qgis2web_expressions.js"></script>
+        <script src="js/leaflet.js"></script>
+        <script src="js/L.Control.Layers.Tree.min.js"></script>
+        <script src="js/L.Control.Locate.min.js"></script>
+        <script src="js/multi-style-layer.js"></script>
+        <script src="js/leaflet.rotatedMarker.js"></script>
+        <script src="js/leaflet.pattern.js"></script>
+        <script src="js/leaflet-hash.js"></script>
+        <script src="js/Autolinker.min.js"></script>
+        <script src="js/rbush.min.js"></script>
+        <script src="js/labelgun.min.js"></script>
+        <script src="js/labels.js"></script>
+        <script src="js/leaflet.photon.js"></script>
+        <script src="js/leaflet-measure.js"></script>
+        <script src="data/RemanescentedeVegetaoNativa_15.js"></script>
+        <script src="data/Audes_16.js"></script>
+        <script src="data/Lavoura_17.js"></script>
+        <script src="data/SemPlantio_18.js"></script>
+        <script src="data/PlantiodePinus_19.js"></script>
+        <script src="data/Estradas_20.js"></script>
+        <script src="data/APP_21.js"></script>
+        <script src="data/CursosdeguaporMatrcula_22.js"></script>
+        <script src="data/FaixadeServidodaLinhadeTransmisso_23.js"></script>
+        <script src="data/ProjetodeSupressodeVegetao_24.js"></script>
+        <script src="data/Matrculas_25.js"></script>
+        <script>
+        var map = L.map('map', {
+            zoomControl:false, maxZoom:28, minZoom:1
+        }).fitBounds([[-27.53578918381664,-51.091928482342354],[-27.493747449661935,-51.003596888999574]]);
+        var hash = new L.Hash(map);
+        map.attributionControl.setPrefix('<a href="https://github.com/tomchadwin/qgis2web" target="_blank">qgis2web</a> &middot; <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &middot; <a href="https://qgis.org">QGIS</a>');
+        var autolinker = new Autolinker({truncate: {length: 30, location: 'smart'}});
+        // remove popup's row if "visible-with-data"
+        function removeEmptyRowsFromPopupContent(content, feature) {
+         var tempDiv = document.createElement('div');
+         tempDiv.innerHTML = content;
+         var rows = tempDiv.querySelectorAll('tr');
+         for (var i = 0; i < rows.length; i++) {
+             var td = rows[i].querySelector('td.visible-with-data');
+             var key = td ? td.id : '';
+             if (td && td.classList.contains('visible-with-data') && feature.properties[key] == null) {
+                 rows[i].parentNode.removeChild(rows[i]);
+             }
+         }
+         return tempDiv.innerHTML;
+        }
+        // modify popup if contains media
+        function addClassToPopupIfMedia(content, popup) {
+            var tempDiv = document.createElement('div');
+            tempDiv.innerHTML = content;
+            var imgTd = tempDiv.querySelector('td img');
+            if (imgTd) {
+                var src = imgTd.getAttribute('src');
+                if (/\.(jpg|jpeg|png|gif|bmp|webp|avif)$/i.test(src)) {
+                    popup._contentNode.classList.add('media');
+                    setTimeout(function() {
+                        popup.update();
+                    }, 10);
+                } else if (/\.(mp3|wav|ogg|aac)$/i.test(src)) {
+                    var audio = document.createElement('audio');
+                    audio.controls = true;
+                    audio.src = src;
+                    imgTd.parentNode.replaceChild(audio, imgTd);
+                    popup._contentNode.classList.add('media');
+                    setTimeout(function() {
+                        popup.setContent(tempDiv.innerHTML);
+                        popup.update();
+                    }, 10);
+                } else if (/\.(mp4|webm|ogg|mov)$/i.test(src)) {
+                    var video = document.createElement('video');
+                    video.controls = true;
+                    video.src = src;
+                    video.style.width = "400px";
+                    video.style.height = "300px";
+                    video.style.maxHeight = "60vh";
+                    video.style.maxWidth = "60vw";
+                    imgTd.parentNode.replaceChild(video, imgTd);
+                    popup._contentNode.classList.add('media');
+                    // Aggiorna il popup quando il video carica i metadati
+                    video.addEventListener('loadedmetadata', function() {
+                        popup.update();
+                    });
+                    setTimeout(function() {
+                        popup.setContent(tempDiv.innerHTML);
+                        popup.update();
+                    }, 10);
+                } else {
+                    popup._contentNode.classList.remove('media');
+                }
+            } else {
+                popup._contentNode.classList.remove('media');
+            }
+        }
+        var zoomControl = L.control.zoom({
+            position: 'topleft'
+        }).addTo(map);
+        L.control.locate({locateOptions: {maxZoom: 19}}).addTo(map);
+        var measureControl = new L.Control.Measure({
+            position: 'topleft',
+            primaryLengthUnit: 'meters',
+            secondaryLengthUnit: 'kilometers',
+            primaryAreaUnit: 'sqmeters',
+            secondaryAreaUnit: 'hectares'
+        });
+        measureControl.addTo(map);
+        document.getElementsByClassName('leaflet-control-measure-toggle')[0].innerHTML = '';
+        document.getElementsByClassName('leaflet-control-measure-toggle')[0].className += ' fas fa-ruler';
+        /* ====== Home / Recenter control (Casinha) ====== */
+        var HomeControl = L.Control.extend({
+            options: { position: 'topleft' },
+            onAdd: function(map) {
+                var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-home');
+                var link = L.DomUtil.create('a', '', container);
+                link.href = '#';
+                link.title = 'Recentrar a ortofoto';
+                link.setAttribute('aria-label', 'Recentrar a ortofoto');
+                link.innerHTML = '<i class="fas fa-home"></i>';
+                L.DomEvent.disableClickPropagation(container);
+                L.DomEvent.on(link, 'click', function(e) {
+                    L.DomEvent.stop(e);
+                    if (bounds_group && bounds_group.getBounds && bounds_group.getBounds().isValid()) {
+                        map.fitBounds(bounds_group.getBounds(), {padding: [20, 20]});
+                    }
+                });
+                return container;
+            }
+        });
+        map.addControl(new HomeControl());
+
+        var bounds_group = new L.featureGroup([]);
+        function setBounds() {
+        }
+        map.createPane('pane_GoogleSatellite_0');
+        map.getPane('pane_GoogleSatellite_0').style.zIndex = 400;
+        var layer_GoogleSatellite_0 = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+            pane: 'pane_GoogleSatellite_0',
+            opacity: 1.0,
+            attribution: '<a href="https://www.google.at/permissions/geoguidelines/attr-guide.html">Map data ©2015 Google</a>',
+            minZoom: 1,
+            maxZoom: 28,
+            minNativeZoom: 0,
+            maxNativeZoom: 20
+        });
+        layer_GoogleSatellite_0;
+        map.addLayer(layer_GoogleSatellite_0);
+        map.createPane('pane_orto00_1');
+        map.getPane('pane_orto00_1').style.zIndex = 401;
+        var img_orto00_1 = 'data/orto00_1.png';
+        var img_bounds_orto00_1 = [[-27.506117745202932,-51.08083238039704],[-27.49527768828297,-51.06867587803648]];
+        var layer_orto00_1 = new L.imageOverlay(img_orto00_1,
+                                              img_bounds_orto00_1,
+                                              {pane: 'pane_orto00_1'});
+        bounds_group.addLayer(layer_orto00_1);
+        map.addLayer(layer_orto00_1);
+        map.createPane('pane_orto01_2');
+        map.getPane('pane_orto01_2').style.zIndex = 402;
+        var img_orto01_2 = 'data/orto01_2.png';
+        var img_bounds_orto01_2 = [[-27.51695125999723,-51.08084029897586],[-27.506111216955293,-51.06868260262957]];
+        var layer_orto01_2 = new L.imageOverlay(img_orto01_2,
+                                              img_bounds_orto01_2,
+                                              {pane: 'pane_orto01_2'});
+        bounds_group.addLayer(layer_orto01_2);
+        map.addLayer(layer_orto01_2);
+        map.createPane('pane_orto02_3');
+        map.getPane('pane_orto02_3').style.zIndex = 403;
+        var img_orto02_3 = 'data/orto02_3.png';
+        var img_bounds_orto02_3 = [[-27.52778475790964,-51.08084822198176],[-27.516944728749564,-51.06868933098275]];
+        var layer_orto02_3 = new L.imageOverlay(img_orto02_3,
+                                              img_bounds_orto02_3,
+                                              {pane: 'pane_orto02_3'});
+        bounds_group.addLayer(layer_orto02_3);
+        map.addLayer(layer_orto02_3);
+        map.createPane('pane_orto10_4');
+        map.getPane('pane_orto10_4').style.zIndex = 404;
+        var img_orto10_4 = 'data/orto10_4.png';
+        var img_bounds_orto10_4 = [[-27.506123212464527,-51.06868260262957],[-27.495284213531136,-51.05652728607102]];
+        var layer_orto10_4 = new L.imageOverlay(img_orto10_4,
+                                              img_bounds_orto10_4,
+                                              {pane: 'pane_orto10_4'});
+        bounds_group.addLayer(layer_orto10_4);
+        map.addLayer(layer_orto10_4);
+        map.createPane('pane_orto11_5');
+        map.getPane('pane_orto11_5').style.zIndex = 405;
+        var img_orto11_5 = 'data/orto11_5.png';
+        var img_bounds_orto11_5 = [[-27.516956729771305,-51.06868933098275],[-27.506117745202932,-51.05653282110203]];
+        var layer_orto11_5 = new L.imageOverlay(img_orto11_5,
+                                              img_bounds_orto11_5,
+                                              {pane: 'pane_orto11_5'});
+        bounds_group.addLayer(layer_orto11_5);
+        map.addLayer(layer_orto11_5);
+        map.createPane('pane_orto12_6');
+        map.getPane('pane_orto12_6').style.zIndex = 406;
+        var img_orto12_6 = 'data/orto12_6.png';
+        var img_bounds_orto12_6 = [[-27.527790230196654,-51.068696063097576],[-27.51695125999723,-51.05653835922798]];
+        var layer_orto12_6 = new L.imageOverlay(img_orto12_6,
+                                              img_bounds_orto12_6,
+                                              {pane: 'pane_orto12_6'});
+        bounds_group.addLayer(layer_orto12_6);
+        map.addLayer(layer_orto12_6);
+        map.createPane('pane_orto20_7');
+        map.getPane('pane_orto20_7').style.zIndex = 407;
+        var img_orto20_7 = 'data/orto20_7.png';
+        var img_bounds_orto20_7 = [[-27.506127618738972,-51.05653282110203],[-27.495289678280745,-51.04437869101191]];
+        var layer_orto20_7 = new L.imageOverlay(img_orto20_7,
+                                              img_bounds_orto20_7,
+                                              {pane: 'pane_orto20_7'});
+        bounds_group.addLayer(layer_orto20_7);
+        map.addLayer(layer_orto20_7);
+        map.createPane('pane_orto21_8');
+        map.getPane('pane_orto21_8').style.zIndex = 408;
+        var img_orto21_8 = 'data/orto21_8.png';
+        var img_bounds_orto21_8 = [[-27.51696113807064,-51.05653835922798],[-27.506123212464527,-51.04438303647955]];
+        var layer_orto21_8 = new L.imageOverlay(img_orto21_8,
+                                              img_bounds_orto21_8,
+                                              {pane: 'pane_orto21_8'});
+        bounds_group.addLayer(layer_orto21_8);
+        map.addLayer(layer_orto21_8);
+        map.createPane('pane_orto22_9');
+        map.getPane('pane_orto22_9').style.zIndex = 409;
+        var img_orto22_9 = 'data/orto22_9.png';
+        var img_bounds_orto22_9 = [[-27.527794640521275,-51.05654390045015],[-27.516956729771305,-51.044387384376975]];
+        var layer_orto22_9 = new L.imageOverlay(img_orto22_9,
+                                              img_bounds_orto22_9,
+                                              {pane: 'pane_orto22_9'});
+        bounds_group.addLayer(layer_orto22_9);
+        map.addLayer(layer_orto22_9);
+        map.createPane('pane_orto23_10');
+        map.getPane('pane_orto23_10').style.zIndex = 410;
+        var img_orto23_10 = 'data/orto23_10.png';
+        var img_bounds_orto23_10 = [[-27.53493661777695,-51.056547555194925],[-27.527790230196654,-51.0443917347052]];
+        var layer_orto23_10 = new L.imageOverlay(img_orto23_10,
+                                              img_bounds_orto23_10,
+                                              {pane: 'pane_orto23_10'});
+        bounds_group.addLayer(layer_orto23_10);
+        map.addLayer(layer_orto23_10);
+        map.createPane('pane_orto30_11');
+        map.getPane('pane_orto30_11').style.zIndex = 411;
+        var img_orto30_11 = 'data/orto30_11.png';
+        var img_bounds_orto30_11 = [[-27.50613071294251,-51.04438303647955],[-27.495294082530684,-51.03329613303386]];
+        var layer_orto30_11 = new L.imageOverlay(img_orto30_11,
+                                              img_bounds_orto30_11,
+                                              {pane: 'pane_orto30_11'});
+        bounds_group.addLayer(layer_orto30_11);
+        map.addLayer(layer_orto30_11);
+        map.createPane('pane_orto31_12');
+        map.getPane('pane_orto31_12').style.zIndex = 412;
+        var img_orto31_12 = 'data/orto31_12.png';
+        var img_bounds_orto31_12 = [[-27.51696423369612,-51.044387384376975],[-27.506127618738972,-51.03329939332141]];
+        var layer_orto31_12 = new L.imageOverlay(img_orto31_12,
+                                              img_bounds_orto31_12,
+                                              {pane: 'pane_orto31_12'});
+        bounds_group.addLayer(layer_orto31_12);
+        map.addLayer(layer_orto31_12);
+        map.createPane('pane_orto32_13');
+        map.getPane('pane_orto32_13').style.zIndex = 413;
+        var img_orto32_13 = 'data/orto32_13.png';
+        var img_bounds_orto32_13 = [[-27.527797737568957,-51.0443917347052],[-27.51696113807064,-51.03330265543196]];
+        var layer_orto32_13 = new L.imageOverlay(img_orto32_13,
+                                              img_bounds_orto32_13,
+                                              {pane: 'pane_orto32_13'});
+        bounds_group.addLayer(layer_orto32_13);
+        map.addLayer(layer_orto32_13);
+        map.createPane('pane_orto33_14');
+        map.getPane('pane_orto33_14').style.zIndex = 414;
+        var img_orto33_14 = 'data/orto33_14.png';
+        var img_bounds_orto33_14 = [[-27.534939715762363,-51.04439460398906],[-27.527794640521275,-51.033305919366285]];
+        var layer_orto33_14 = new L.imageOverlay(img_orto33_14,
+                                              img_bounds_orto33_14,
+                                              {pane: 'pane_orto33_14'});
+        bounds_group.addLayer(layer_orto33_14);
+        map.addLayer(layer_orto33_14);
+        function pop_RemanescentedeVegetaoNativa_15(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['fid'] !== null ? autolinker.link(String(feature.properties['fid']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['area'] !== null ? autolinker.link(String(feature.properties['area']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Sequência'] !== null ? autolinker.link(String(feature.properties['Sequência']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Matrículas'] !== null ? autolinker.link(String(feature.properties['Matrículas']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['soma_area'] !== null ? autolinker.link(String(feature.properties['soma_area']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Módulo Fiscal'] !== null ? autolinker.link(String(feature.properties['Módulo Fiscal']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['app_m'] !== null ? autolinker.link(String(feature.properties['app_m']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['auxiliary_storage_labeling_positionx'] !== null ? autolinker.link(String(feature.properties['auxiliary_storage_labeling_positionx']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['auxiliary_storage_labeling_positiony'] !== null ? autolinker.link(String(feature.properties['auxiliary_storage_labeling_positiony']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['auxiliary_storage_labeling_lineanchorpercent'] !== null ? autolinker.link(String(feature.properties['auxiliary_storage_labeling_lineanchorpercent']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['auxiliary_storage_labeling_lineanchorclipping'] !== null ? autolinker.link(String(feature.properties['auxiliary_storage_labeling_lineanchorclipping']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['auxiliary_storage_labeling_lineanchortype'] !== null ? autolinker.link(String(feature.properties['auxiliary_storage_labeling_lineanchortype']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['auxiliary_storage_labeling_lineanchortextpoint'] !== null ? autolinker.link(String(feature.properties['auxiliary_storage_labeling_lineanchortextpoint']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Área (ha)'] !== null ? autolinker.link(String(feature.properties['Área (ha)']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Soma Área'] !== null ? autolinker.link(String(feature.properties['Soma Área']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_RemanescentedeVegetaoNativa_15_0() {
+            return {
+                pane: 'pane_RemanescentedeVegetaoNativa_15',
+                opacity: 0.5,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 0.5,
+                fillColor: 'rgba(22,255,1,1.0)',
+                interactive: false,
+            }
+        }
+        map.createPane('pane_RemanescentedeVegetaoNativa_15');
+        map.getPane('pane_RemanescentedeVegetaoNativa_15').style.zIndex = 415;
+        map.getPane('pane_RemanescentedeVegetaoNativa_15').style['mix-blend-mode'] = 'normal';
+        var layer_RemanescentedeVegetaoNativa_15 = new L.geoJson(json_RemanescentedeVegetaoNativa_15, {
+            attribution: '',
+            interactive: false,
+            dataVar: 'json_RemanescentedeVegetaoNativa_15',
+            layerName: 'layer_RemanescentedeVegetaoNativa_15',
+            pane: 'pane_RemanescentedeVegetaoNativa_15',
+            onEachFeature: pop_RemanescentedeVegetaoNativa_15,
+            style: style_RemanescentedeVegetaoNativa_15_0,
+        });
+        bounds_group.addLayer(layer_RemanescentedeVegetaoNativa_15);
+        function pop_Audes_16(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['fid'] !== null ? autolinker.link(String(feature.properties['fid']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_Audes_16_0() {
+            return {
+                pane: 'pane_Audes_16',
+                opacity: 0.5,
+                color: 'rgba(38,89,128,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 0.5,
+                fillColor: 'rgba(55,126,184,1.0)',
+                interactive: false,
+            }
+        }
+        map.createPane('pane_Audes_16');
+        map.getPane('pane_Audes_16').style.zIndex = 416;
+        map.getPane('pane_Audes_16').style['mix-blend-mode'] = 'normal';
+        var layer_Audes_16 = new L.geoJson(json_Audes_16, {
+            attribution: '',
+            interactive: false,
+            dataVar: 'json_Audes_16',
+            layerName: 'layer_Audes_16',
+            pane: 'pane_Audes_16',
+            onEachFeature: pop_Audes_16,
+            style: style_Audes_16_0,
+        });
+        bounds_group.addLayer(layer_Audes_16);
+        function pop_Lavoura_17(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['fid'] !== null ? autolinker.link(String(feature.properties['fid']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Área (ha)'] !== null ? autolinker.link(String(feature.properties['Área (ha)']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_Lavoura_17_0() {
+            return {
+                pane: 'pane_Lavoura_17',
+                opacity: 0.5,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 0.5,
+                fillColor: 'rgba(141,90,9,1.0)',
+                interactive: false,
+            }
+        }
+        map.createPane('pane_Lavoura_17');
+        map.getPane('pane_Lavoura_17').style.zIndex = 417;
+        map.getPane('pane_Lavoura_17').style['mix-blend-mode'] = 'normal';
+        var layer_Lavoura_17 = new L.geoJson(json_Lavoura_17, {
+            attribution: '',
+            interactive: false,
+            dataVar: 'json_Lavoura_17',
+            layerName: 'layer_Lavoura_17',
+            pane: 'pane_Lavoura_17',
+            onEachFeature: pop_Lavoura_17,
+            style: style_Lavoura_17_0,
+        });
+        bounds_group.addLayer(layer_Lavoura_17);
+        function pop_SemPlantio_18(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['fid'] !== null ? autolinker.link(String(feature.properties['fid']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Área (ha)'] !== null ? autolinker.link(String(feature.properties['Área (ha)']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_SemPlantio_18_0() {
+            return {
+                pane: 'pane_SemPlantio_18',
+                opacity: 0.5,
+                color: 'rgba(153,80,119,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 0.5,
+                fillColor: 'rgba(247,129,191,1.0)',
+                interactive: false,
+            }
+        }
+        map.createPane('pane_SemPlantio_18');
+        map.getPane('pane_SemPlantio_18').style.zIndex = 418;
+        map.getPane('pane_SemPlantio_18').style['mix-blend-mode'] = 'normal';
+        var layer_SemPlantio_18 = new L.geoJson(json_SemPlantio_18, {
+            attribution: '',
+            interactive: false,
+            dataVar: 'json_SemPlantio_18',
+            layerName: 'layer_SemPlantio_18',
+            pane: 'pane_SemPlantio_18',
+            onEachFeature: pop_SemPlantio_18,
+            style: style_SemPlantio_18_0,
+        });
+        bounds_group.addLayer(layer_SemPlantio_18);
+        function pop_PlantiodePinus_19(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['fid'] !== null ? autolinker.link(String(feature.properties['fid']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Sequência'] !== null ? autolinker.link(String(feature.properties['Sequência']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Matrículas'] !== null ? autolinker.link(String(feature.properties['Matrículas']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Área (ha)'] !== null ? autolinker.link(String(feature.properties['Área (ha)']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Area sem APP'] !== null ? autolinker.link(String(feature.properties['Area sem APP']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_PlantiodePinus_19_0() {
+            return {
+                pane: 'pane_PlantiodePinus_19',
+                opacity: 0.5,
+                color: 'rgba(128,62,0,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 0.5,
+                fillColor: 'rgba(255,127,0,1.0)',
+                interactive: false,
+            }
+        }
+        map.createPane('pane_PlantiodePinus_19');
+        map.getPane('pane_PlantiodePinus_19').style.zIndex = 419;
+        map.getPane('pane_PlantiodePinus_19').style['mix-blend-mode'] = 'normal';
+        var layer_PlantiodePinus_19 = new L.geoJson(json_PlantiodePinus_19, {
+            attribution: '',
+            interactive: false,
+            dataVar: 'json_PlantiodePinus_19',
+            layerName: 'layer_PlantiodePinus_19',
+            pane: 'pane_PlantiodePinus_19',
+            onEachFeature: pop_PlantiodePinus_19,
+            style: style_PlantiodePinus_19_0,
+        });
+        bounds_group.addLayer(layer_PlantiodePinus_19);
+        function pop_Estradas_20(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['fid'] !== null ? autolinker.link(String(feature.properties['fid']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_Estradas_20_0() {
+            return {
+                pane: 'pane_Estradas_20',
+                opacity: 0.5,
+                color: 'rgba(255,255,255,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 0.5,
+                fillColor: 'rgba(206,206,206,1.0)',
+                interactive: false,
+            }
+        }
+        map.createPane('pane_Estradas_20');
+        map.getPane('pane_Estradas_20').style.zIndex = 420;
+        map.getPane('pane_Estradas_20').style['mix-blend-mode'] = 'normal';
+        var layer_Estradas_20 = new L.geoJson(json_Estradas_20, {
+            attribution: '',
+            interactive: false,
+            dataVar: 'json_Estradas_20',
+            layerName: 'layer_Estradas_20',
+            pane: 'pane_Estradas_20',
+            onEachFeature: pop_Estradas_20,
+            style: style_Estradas_20_0,
+        });
+        bounds_group.addLayer(layer_Estradas_20);
+        function pop_APP_21(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['fid'] !== null ? autolinker.link(String(feature.properties['fid']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['COCURSODAG'] !== null ? autolinker.link(String(feature.properties['COCURSODAG']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['COCDACOSTA'] !== null ? autolinker.link(String(feature.properties['COCDACOSTA']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['CODOM'] !== null ? autolinker.link(String(feature.properties['CODOM']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['COCDADESAG'] !== null ? autolinker.link(String(feature.properties['COCDADESAG']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['NUCOMPCDA'] !== null ? autolinker.link(String(feature.properties['NUCOMPCDA']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['NUTRJUS'] !== null ? autolinker.link(String(feature.properties['NUTRJUS']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['NUTRMON'] !== null ? autolinker.link(String(feature.properties['NUTRMON']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['NUTRAFL'] !== null ? autolinker.link(String(feature.properties['NUTRAFL']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['NUDISTBACC'] !== null ? autolinker.link(String(feature.properties['NUDISTBACC']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['NUAREABACC'] !== null ? autolinker.link(String(feature.properties['NUAREABACC']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['NUORDEMCDA'] !== null ? autolinker.link(String(feature.properties['NUORDEMCDA']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['NUNIVOTCDA'] !== null ? autolinker.link(String(feature.properties['NUNIVOTCDA']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['NULONDECDA'] !== null ? autolinker.link(String(feature.properties['NULONDECDA']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['NULATDECDA'] !== null ? autolinker.link(String(feature.properties['NULATDECDA']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['NULONPACDA'] !== null ? autolinker.link(String(feature.properties['NULONPACDA']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['NULATPACDA'] !== null ? autolinker.link(String(feature.properties['NULATPACDA']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['DTVERSAO'] !== null ? autolinker.link(String(feature.properties['DTVERSAO']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['COCDA'] !== null ? autolinker.link(String(feature.properties['COCDA']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['SHAPE_LENG'] !== null ? autolinker.link(String(feature.properties['SHAPE_LENG']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['fid_2'] !== null ? autolinker.link(String(feature.properties['fid_2']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['area'] !== null ? autolinker.link(String(feature.properties['area']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Sequência'] !== null ? autolinker.link(String(feature.properties['Sequência']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Matrículas'] !== null ? autolinker.link(String(feature.properties['Matrículas']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['soma_area'] !== null ? autolinker.link(String(feature.properties['soma_area']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Módulo Fiscal'] !== null ? autolinker.link(String(feature.properties['Módulo Fiscal']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['app_m'] !== null ? autolinker.link(String(feature.properties['app_m']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['layer'] !== null ? autolinker.link(String(feature.properties['layer']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['path'] !== null ? autolinker.link(String(feature.properties['path']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['vertex_index'] !== null ? autolinker.link(String(feature.properties['vertex_index']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['vertex_part'] !== null ? autolinker.link(String(feature.properties['vertex_part']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['vertex_part_index'] !== null ? autolinker.link(String(feature.properties['vertex_part_index']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['distance'] !== null ? autolinker.link(String(feature.properties['distance']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['angle'] !== null ? autolinker.link(String(feature.properties['angle']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_APP_21_0() {
+            return {
+                pane: 'pane_APP_21',
+                opacity: 0.5,
+                color: 'rgba(38,89,128,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 0.5,
+                fillColor: 'rgba(0,55,192,1.0)',
+                interactive: false,
+            }
+        }
+        map.createPane('pane_APP_21');
+        map.getPane('pane_APP_21').style.zIndex = 421;
+        map.getPane('pane_APP_21').style['mix-blend-mode'] = 'normal';
+        var layer_APP_21 = new L.geoJson(json_APP_21, {
+            attribution: '',
+            interactive: false,
+            dataVar: 'json_APP_21',
+            layerName: 'layer_APP_21',
+            pane: 'pane_APP_21',
+            onEachFeature: pop_APP_21,
+            style: style_APP_21_0,
+        });
+        bounds_group.addLayer(layer_APP_21);
+        function pop_CursosdeguaporMatrcula_22(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['fid'] !== null ? autolinker.link(String(feature.properties['fid']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['COCURSODAG'] !== null ? autolinker.link(String(feature.properties['COCURSODAG']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['COCDACOSTA'] !== null ? autolinker.link(String(feature.properties['COCDACOSTA']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['CODOM'] !== null ? autolinker.link(String(feature.properties['CODOM']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['COCDADESAG'] !== null ? autolinker.link(String(feature.properties['COCDADESAG']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['NUCOMPCDA'] !== null ? autolinker.link(String(feature.properties['NUCOMPCDA']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['NUTRJUS'] !== null ? autolinker.link(String(feature.properties['NUTRJUS']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['NUTRMON'] !== null ? autolinker.link(String(feature.properties['NUTRMON']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['NUTRAFL'] !== null ? autolinker.link(String(feature.properties['NUTRAFL']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['NUDISTBACC'] !== null ? autolinker.link(String(feature.properties['NUDISTBACC']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['NUAREABACC'] !== null ? autolinker.link(String(feature.properties['NUAREABACC']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['NUORDEMCDA'] !== null ? autolinker.link(String(feature.properties['NUORDEMCDA']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['NUNIVOTCDA'] !== null ? autolinker.link(String(feature.properties['NUNIVOTCDA']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['NULONDECDA'] !== null ? autolinker.link(String(feature.properties['NULONDECDA']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['NULATDECDA'] !== null ? autolinker.link(String(feature.properties['NULATDECDA']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['NULONPACDA'] !== null ? autolinker.link(String(feature.properties['NULONPACDA']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['NULATPACDA'] !== null ? autolinker.link(String(feature.properties['NULATPACDA']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['DTVERSAO'] !== null ? autolinker.link(String(feature.properties['DTVERSAO']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['COCDA'] !== null ? autolinker.link(String(feature.properties['COCDA']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['SHAPE_LENG'] !== null ? autolinker.link(String(feature.properties['SHAPE_LENG']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_CursosdeguaporMatrcula_22_0() {
+            return {
+                pane: 'pane_CursosdeguaporMatrcula_22',
+                opacity: 0.5,
+                color: 'rgba(0,55,192,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 2.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+        }
+        map.createPane('pane_CursosdeguaporMatrcula_22');
+        map.getPane('pane_CursosdeguaporMatrcula_22').style.zIndex = 422;
+        map.getPane('pane_CursosdeguaporMatrcula_22').style['mix-blend-mode'] = 'normal';
+        var layer_CursosdeguaporMatrcula_22 = new L.geoJson(json_CursosdeguaporMatrcula_22, {
+            attribution: '',
+            interactive: false,
+            dataVar: 'json_CursosdeguaporMatrcula_22',
+            layerName: 'layer_CursosdeguaporMatrcula_22',
+            pane: 'pane_CursosdeguaporMatrcula_22',
+            onEachFeature: pop_CursosdeguaporMatrcula_22,
+            style: style_CursosdeguaporMatrcula_22_0,
+        });
+        bounds_group.addLayer(layer_CursosdeguaporMatrcula_22);
+        function pop_FaixadeServidodaLinhadeTransmisso_23(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['fid'] !== null ? autolinker.link(String(feature.properties['fid']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Área (ha)'] !== null ? autolinker.link(String(feature.properties['Área (ha)']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_FaixadeServidodaLinhadeTransmisso_23_0() {
+            return {
+                pane: 'pane_FaixadeServidodaLinhadeTransmisso_23',
+                opacity: 0.5,
+                color: 'rgba(228,26,28,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 1.0,
+                fill: true,
+                fillOpacity: 0.5,
+                fillColor: 'rgba(228,26,28,1.0)',
+                interactive: false,
+            }
+        }
+        function style_FaixadeServidodaLinhadeTransmisso_23_1() {
+            return {
+                pane: 'pane_FaixadeServidodaLinhadeTransmisso_23',
+                opacity: 0.8,
+                color: 'rgba(180,0,0,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 2.0,
+                fillOpacity: 0,
+                interactive: false,
+            }
+        }
+        map.createPane('pane_FaixadeServidodaLinhadeTransmisso_23');
+        map.getPane('pane_FaixadeServidodaLinhadeTransmisso_23').style.zIndex = 423;
+        map.getPane('pane_FaixadeServidodaLinhadeTransmisso_23').style['mix-blend-mode'] = 'normal';
+        var layer_FaixadeServidodaLinhadeTransmisso_23 = new L.geoJson.multiStyle(json_FaixadeServidodaLinhadeTransmisso_23, {
+            attribution: '',
+            interactive: false,
+            dataVar: 'json_FaixadeServidodaLinhadeTransmisso_23',
+            layerName: 'layer_FaixadeServidodaLinhadeTransmisso_23',
+            pane: 'pane_FaixadeServidodaLinhadeTransmisso_23',
+            onEachFeature: pop_FaixadeServidodaLinhadeTransmisso_23,
+            styles: [style_FaixadeServidodaLinhadeTransmisso_23_0,style_FaixadeServidodaLinhadeTransmisso_23_1,]
+        });
+        bounds_group.addLayer(layer_FaixadeServidodaLinhadeTransmisso_23);
+        function pop_ProjetodeSupressodeVegetao_24(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['fid'] !== null ? autolinker.link(String(feature.properties['fid']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Name'] !== null ? autolinker.link(String(feature.properties['Name']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Area'] !== null ? autolinker.link(String(feature.properties['Area']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Observações'] !== null ? autolinker.link(String(feature.properties['Observações']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_ProjetodeSupressodeVegetao_24_0() {
+            return {
+                pane: 'pane_ProjetodeSupressodeVegetao_24',
+                opacity: 0.5,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 6.0, 
+                fillOpacity: 0,
+                interactive: false,
+            }
+        }
+        map.createPane('pane_ProjetodeSupressodeVegetao_24');
+        map.getPane('pane_ProjetodeSupressodeVegetao_24').style.zIndex = 424;
+        map.getPane('pane_ProjetodeSupressodeVegetao_24').style['mix-blend-mode'] = 'normal';
+        var layer_ProjetodeSupressodeVegetao_24 = new L.geoJson(json_ProjetodeSupressodeVegetao_24, {
+            attribution: '',
+            interactive: false,
+            dataVar: 'json_ProjetodeSupressodeVegetao_24',
+            layerName: 'layer_ProjetodeSupressodeVegetao_24',
+            pane: 'pane_ProjetodeSupressodeVegetao_24',
+            onEachFeature: pop_ProjetodeSupressodeVegetao_24,
+            style: style_ProjetodeSupressodeVegetao_24_0,
+        });
+        bounds_group.addLayer(layer_ProjetodeSupressodeVegetao_24);
+        function pop_Matrculas_25(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['fid'] !== null ? autolinker.link(String(feature.properties['fid']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['area'] !== null ? autolinker.link(String(feature.properties['area']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Sequência'] !== null ? autolinker.link(String(feature.properties['Sequência']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2"><strong>Matrículas</strong><br />' + (feature.properties['Matrículas'] !== null ? autolinker.link(String(feature.properties['Matrículas']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['soma_area'] !== null ? autolinker.link(String(feature.properties['soma_area']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Módulo Fiscal'] !== null ? autolinker.link(String(feature.properties['Módulo Fiscal']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['app_m'] !== null ? autolinker.link(String(feature.properties['app_m']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['auxiliary_storage_labeling_lineanchorpercent'] !== null ? autolinker.link(String(feature.properties['auxiliary_storage_labeling_lineanchorpercent']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['auxiliary_storage_labeling_lineanchorclipping'] !== null ? autolinker.link(String(feature.properties['auxiliary_storage_labeling_lineanchorclipping']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['auxiliary_storage_labeling_lineanchortype'] !== null ? autolinker.link(String(feature.properties['auxiliary_storage_labeling_lineanchortype']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['auxiliary_storage_labeling_lineanchortextpoint'] !== null ? autolinker.link(String(feature.properties['auxiliary_storage_labeling_lineanchortextpoint']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_Matrculas_25_0() {
+            return {
+                pane: 'pane_Matrculas_25',
+                opacity: 0.5,
+                color: 'rgba(220,234,81,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 4.0, 
+                fillOpacity: 0,
+                interactive: true,
+            }
+        }
+        map.createPane('pane_Matrculas_25');
+        map.getPane('pane_Matrculas_25').style.zIndex = 425;
+        map.getPane('pane_Matrculas_25').style['mix-blend-mode'] = 'normal';
+        var layer_Matrculas_25 = new L.geoJson(json_Matrculas_25, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_Matrculas_25',
+            layerName: 'layer_Matrculas_25',
+            pane: 'pane_Matrculas_25',
+            onEachFeature: pop_Matrculas_25,
+            style: style_Matrculas_25_0,
+        });
+        bounds_group.addLayer(layer_Matrculas_25);
+        map.addLayer(layer_Matrculas_25);
+
+        /* ====== Toggle Matrículas labels (show/hide numbers) ====== */
+        var matriculasLabelsVisible = true;
+
+        function setMatriculasLabelsVisible(isVisible){
+            matriculasLabelsVisible = !!isVisible;
+            if (matriculasLabelsVisible){
+                document.body.classList.remove('hide-matriculas-labels');
+            } else {
+                document.body.classList.add('hide-matriculas-labels');
+            }
+            if (window._matLabelsBtn){
+                window._matLabelsBtn.setAttribute('aria-pressed', matriculasLabelsVisible ? 'true' : 'false');
+                window._matLabelsBtn.title = matriculasLabelsVisible ? 'Ocultar números das matrículas' : 'Mostrar números das matrículas';
+            }
+            // refresh label placement (labelgun)
+            try { resetLabels([layer_ProjetodeSupressodeVegetao_24,layer_Matrculas_25]); } catch(err) {}
+        }
+
+        var MatriculasLabelsControl = L.Control.extend({
+            options: { position: 'topleft' },
+            onAdd: function(map) {
+                var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-matriculaslabels');
+                var link = L.DomUtil.create('a', '', container);
+                link.href = '#';
+                link.title = 'Ocultar números das matrículas';
+                link.setAttribute('role', 'button');
+                link.setAttribute('aria-label', 'Mostrar ou ocultar números das matrículas');
+                link.setAttribute('aria-pressed', 'true');
+                link.innerHTML = '<span style="font-family: Arial, Helvetica, sans-serif; font-weight: 700; font-size: 12px; line-height: 30px; display:block; text-align:center;">123</span>';
+
+                L.DomEvent.disableClickPropagation(container);
+                L.DomEvent.on(link, 'click', function(e) {
+                    L.DomEvent.stop(e);
+                    setMatriculasLabelsVisible(!matriculasLabelsVisible);
+                });
+
+                // expose for updates
+                window._matLabelsCtl = container;
+                window._matLabelsBtn = link;
+
+                return container;
+            }
+        });
+
+        var matLabelsControl = new MatriculasLabelsControl();
+        map.addControl(matLabelsControl);
+
+        function updateMatriculasLabelsControlVisibility(){
+            // show the control only when "Matrículas" layer is active
+            var isOn = map.hasLayer(layer_Matrculas_25);
+            if (window._matLabelsCtl){
+                window._matLabelsCtl.style.display = isOn ? '' : 'none';
+            }
+            // if layer is off, keep labels hidden (visual) and avoid confusion
+            if (!isOn){
+                // do nothing else; when layer comes back, respect current toggle state
+            }
+        }
+
+        updateMatriculasLabelsControlVisibility();
+        map.on('layeradd', function(e){
+            if (e.layer === layer_Matrculas_25){ updateMatriculasLabelsControlVisibility(); }
+        });
+        map.on('layerremove', function(e){
+            if (e.layer === layer_Matrculas_25){ updateMatriculasLabelsControlVisibility(); }
+        });
+
+        
+        /* ====== Documentação (PDFs) ====== */
+        function createDocLayer(url){
+            var g = L.layerGroup();
+            g._docUrl = url;
+            return g;
+        }
+
+        // Matrículas (PDF)
+        var doc_matr_16090 = createDocLayer('docs/matriculas/matr_16.090.pdf');
+        var doc_matr_16092 = createDocLayer('docs/matriculas/matr_16.092.pdf');
+        var doc_matr_16094 = createDocLayer('docs/matriculas/matr_16.094.pdf');
+        var doc_matr_16100 = createDocLayer('docs/matriculas/matr_16.100.pdf');
+        var doc_matr_16101 = createDocLayer('docs/matriculas/matr_16.101.pdf');
+        var doc_matr_16102 = createDocLayer('docs/matriculas/matr_16.102.pdf');
+        var doc_matr_16103 = createDocLayer('docs/matriculas/matr_16.103.pdf');
+        var doc_matr_39018 = createDocLayer('docs/matriculas/matr_39.018.pdf');
+        var doc_matr_39022 = createDocLayer('docs/matriculas/matr_39.022.pdf');
+        var doc_matr_39525 = createDocLayer('docs/matriculas/matr_39.525.pdf');
+        var doc_matr_39526 = createDocLayer('docs/matriculas/matr_39.526.pdf');
+        var doc_matr_39527 = createDocLayer('docs/matriculas/matr_39.527.pdf');
+        var doc_matr_39528 = createDocLayer('docs/matriculas/matr_39.528.pdf');
+
+        // CAR (PDF) - 13 arquivos
+        var doc_car_16090 = createDocLayer('docs/car/CAR_16.090.pdf');
+        var doc_car_16092 = createDocLayer('docs/car/CAR_16.092.pdf');
+        var doc_car_16094 = createDocLayer('docs/car/CAR_16.094.pdf');
+        var doc_car_16100 = createDocLayer('docs/car/CAR_16.100.pdf');
+        var doc_car_16101 = createDocLayer('docs/car/CAR_16.101.pdf');
+        var doc_car_16102 = createDocLayer('docs/car/CAR_16.102.pdf');
+        var doc_car_16103 = createDocLayer('docs/car/CAR_16.103.pdf');
+        var doc_car_39018 = createDocLayer('docs/car/CAR_39.018.pdf');
+        var doc_car_39022 = createDocLayer('docs/car/CAR_39.022.pdf');
+        var doc_car_39525 = createDocLayer('docs/car/CAR_39.525.pdf');
+        var doc_car_39526 = createDocLayer('docs/car/CAR_39.526.pdf');
+        var doc_car_39527 = createDocLayer('docs/car/CAR_39.527.pdf');
+        var doc_car_39528 = createDocLayer('docs/car/CAR_39.528.pdf');
+
+        // CCIR (PDF) - 10 arquivos (alguns unificados)
+        var doc_ccir_16090 = createDocLayer('docs/ccir/CCIR_16.090.pdf');
+        var doc_ccir_16092_ab = createDocLayer('docs/ccir/CCIR_16.092_AB.pdf');
+        var doc_ccir_16094_ab = createDocLayer('docs/ccir/CCIR_16.094_AB.pdf');
+        var doc_ccir_16100 = createDocLayer('docs/ccir/CCIR_16.100.pdf');
+        var doc_ccir_16101 = createDocLayer('docs/ccir/CCIR_16.101.pdf');
+        var doc_ccir_16102_16103 = createDocLayer('docs/ccir/CCIR_16.102_16.103.pdf');
+        var doc_ccir_39018 = createDocLayer('docs/ccir/CCIR_39.018.pdf');
+        var doc_ccir_39022 = createDocLayer('docs/ccir/CCIR_39.022.pdf');
+        var doc_ccir_39525_39526 = createDocLayer('docs/ccir/CCIR_39.525_39.526.pdf');
+        var doc_ccir_39527_39528 = createDocLayer('docs/ccir/CCIR_39.527_39.528.pdf');
+
+        // ITR (PDF) - 8 arquivos (alguns unificados)
+        var doc_itr_16090 = createDocLayer('docs/itr/ITR_16.090.pdf');
+        var doc_itr_16092 = createDocLayer('docs/itr/ITR_16.092.pdf');
+        var doc_itr_16094 = createDocLayer('docs/itr/ITR_16.094.pdf');
+        var doc_itr_16100_16101_16102_16103 = createDocLayer('docs/itr/ITR_16.100_16.101_16.102_16.103.pdf');
+        var doc_itr_39018 = createDocLayer('docs/itr/ITR_39.018.pdf');
+        var doc_itr_39022 = createDocLayer('docs/itr/ITR_39.022.pdf');
+        var doc_itr_39525_39526 = createDocLayer('docs/itr/ITR_39.525_39.526.pdf');
+        var doc_itr_39527_39528 = createDocLayer('docs/itr/ITR_39.527_39.528.pdf');
+
+        // Abre PDF em nova aba ao clicar no item e desmarca automaticamente
+var overlaysTree = [
+            {label: '<img src="legend/Matrculas_25.png" /> Matrículas', layer: layer_Matrculas_25},
+            {label: '<img src="legend/ProjetodeSupressodeVegetao_24.png" /> Projeto de Supressão de Vegetação', layer: layer_ProjetodeSupressodeVegetao_24},
+        {label: '<b>Obrigações Legais</b>', collapsed: true, selectAllCheckbox: true, children: [
+            {label: '<img src="legend/FaixadeServidodaLinhadeTransmisso_23.png" /> Faixa de Servidão da Linha de Transmissão', layer: layer_FaixadeServidodaLinhadeTransmisso_23},
+            {label: '<img src="legend/CursosdeguaporMatrcula_22.png" /> Cursos de Água por Matrícula', layer: layer_CursosdeguaporMatrcula_22},
+            {label: '<img src="legend/APP_21.png" /> APP', layer: layer_APP_21},]},
+        {label: '<b>Uso do Solo</b>', collapsed: true, selectAllCheckbox: true, children: [
+            {label: '<img src="legend/Estradas_20.png" /> Estradas', layer: layer_Estradas_20},
+            {label: '<img src="legend/PlantiodePinus_19.png" /> Plantio de Pinus', layer: layer_PlantiodePinus_19},
+            {label: '<img src="legend/SemPlantio_18.png" /> Sem Plantio', layer: layer_SemPlantio_18},
+            {label: '<img src="legend/Lavoura_17.png" /> Lavoura', layer: layer_Lavoura_17},
+            {label: '<img src="legend/Audes_16.png" /> Açudes', layer: layer_Audes_16},
+            {label: '<img src="legend/RemanescentedeVegetaoNativa_15.png" /> Remanescente de Vegetação Nativa', layer: layer_RemanescentedeVegetaoNativa_15},]},
+        {label: '<b>Ortomosaico</b>', collapsed: true, selectAllCheckbox: true, children: [
+            {label: "orto-3-3", layer: layer_orto33_14},
+            {label: "orto-3-2", layer: layer_orto32_13},
+            {label: "orto-3-1", layer: layer_orto31_12},
+            {label: "orto-3-0", layer: layer_orto30_11},
+            {label: "orto-2-3", layer: layer_orto23_10},
+            {label: "orto-2-2", layer: layer_orto22_9},
+            {label: "orto-2-1", layer: layer_orto21_8},
+            {label: "orto-2-0", layer: layer_orto20_7},
+            {label: "orto-1-2", layer: layer_orto12_6},
+            {label: "orto-1-1", layer: layer_orto11_5},
+            {label: "orto-1-0", layer: layer_orto10_4},
+            {label: "orto-0-2", layer: layer_orto02_3},
+            {label: "orto-0-1", layer: layer_orto01_2},
+            {label: "orto-0-0", layer: layer_orto00_1},]},
+            {label: "Google Satellite", layer: layer_GoogleSatellite_0},
+        
+        {label: '<b>Documentação</b>', collapsed: true, selectAllCheckbox: false, children: [
+            {label: '<b>Matrículas (PDF)</b>', collapsed: true, selectAllCheckbox: false, children: [
+                {label: "<a class=\"doc-link\" href=\"docs/matriculas/matr_16.090.pdf\" target=\"_blank\" rel=\"noopener\">Matrícula 16.090</a>", layer: doc_matr_16090},
+                {label: "<a class=\"doc-link\" href=\"docs/matriculas/matr_16.092.pdf\" target=\"_blank\" rel=\"noopener\">Matrícula 16.092</a>", layer: doc_matr_16092},
+                {label: "<a class=\"doc-link\" href=\"docs/matriculas/matr_16.094.pdf\" target=\"_blank\" rel=\"noopener\">Matrícula 16.094</a>", layer: doc_matr_16094},
+                {label: "<a class=\"doc-link\" href=\"docs/matriculas/matr_16.100.pdf\" target=\"_blank\" rel=\"noopener\">Matrícula 16.100</a>", layer: doc_matr_16100},
+                {label: "<a class=\"doc-link\" href=\"docs/matriculas/matr_16.101.pdf\" target=\"_blank\" rel=\"noopener\">Matrícula 16.101</a>", layer: doc_matr_16101},
+                {label: "<a class=\"doc-link\" href=\"docs/matriculas/matr_16.102.pdf\" target=\"_blank\" rel=\"noopener\">Matrícula 16.102</a>", layer: doc_matr_16102},
+                {label: "<a class=\"doc-link\" href=\"docs/matriculas/matr_16.103.pdf\" target=\"_blank\" rel=\"noopener\">Matrícula 16.103</a>", layer: doc_matr_16103},
+                {label: "<a class=\"doc-link\" href=\"docs/matriculas/matr_39.018.pdf\" target=\"_blank\" rel=\"noopener\">Matrícula 39.018</a>", layer: doc_matr_39018},
+                {label: "<a class=\"doc-link\" href=\"docs/matriculas/matr_39.022.pdf\" target=\"_blank\" rel=\"noopener\">Matrícula 39.022</a>", layer: doc_matr_39022},
+                {label: "<a class=\"doc-link\" href=\"docs/matriculas/matr_39.525.pdf\" target=\"_blank\" rel=\"noopener\">Matrícula 39.525</a>", layer: doc_matr_39525},
+                {label: "<a class=\"doc-link\" href=\"docs/matriculas/matr_39.526.pdf\" target=\"_blank\" rel=\"noopener\">Matrícula 39.526</a>", layer: doc_matr_39526},
+                {label: "<a class=\"doc-link\" href=\"docs/matriculas/matr_39.527.pdf\" target=\"_blank\" rel=\"noopener\">Matrícula 39.527</a>", layer: doc_matr_39527},
+                {label: "<a class=\"doc-link\" href=\"docs/matriculas/matr_39.528.pdf\" target=\"_blank\" rel=\"noopener\">Matrícula 39.528</a>", layer: doc_matr_39528}
+            ]},
+            {label: '<b>CAR (PDF)</b>', collapsed: true, selectAllCheckbox: false, children: [
+                {label: "<a class=\"doc-link\" href=\"docs/car/CAR_16.090.pdf\" target=\"_blank\" rel=\"noopener\">CAR 16.090</a>", layer: doc_car_16090},
+                {label: "<a class=\"doc-link\" href=\"docs/car/CAR_16.092.pdf\" target=\"_blank\" rel=\"noopener\">CAR 16.092</a>", layer: doc_car_16092},
+                {label: "<a class=\"doc-link\" href=\"docs/car/CAR_16.094.pdf\" target=\"_blank\" rel=\"noopener\">CAR 16.094</a>", layer: doc_car_16094},
+                {label: "<a class=\"doc-link\" href=\"docs/car/CAR_16.100.pdf\" target=\"_blank\" rel=\"noopener\">CAR 16.100</a>", layer: doc_car_16100},
+                {label: "<a class=\"doc-link\" href=\"docs/car/CAR_16.101.pdf\" target=\"_blank\" rel=\"noopener\">CAR 16.101</a>", layer: doc_car_16101},
+                {label: "<a class=\"doc-link\" href=\"docs/car/CAR_16.102.pdf\" target=\"_blank\" rel=\"noopener\">CAR 16.102</a>", layer: doc_car_16102},
+                {label: "<a class=\"doc-link\" href=\"docs/car/CAR_16.103.pdf\" target=\"_blank\" rel=\"noopener\">CAR 16.103</a>", layer: doc_car_16103},
+                {label: "<a class=\"doc-link\" href=\"docs/car/CAR_39.018.pdf\" target=\"_blank\" rel=\"noopener\">CAR 39.018</a>", layer: doc_car_39018},
+                {label: "<a class=\"doc-link\" href=\"docs/car/CAR_39.022.pdf\" target=\"_blank\" rel=\"noopener\">CAR 39.022</a>", layer: doc_car_39022},
+                {label: "<a class=\"doc-link\" href=\"docs/car/CAR_39.525.pdf\" target=\"_blank\" rel=\"noopener\">CAR 39.525</a>", layer: doc_car_39525},
+                {label: "<a class=\"doc-link\" href=\"docs/car/CAR_39.526.pdf\" target=\"_blank\" rel=\"noopener\">CAR 39.526</a>", layer: doc_car_39526},
+                {label: "<a class=\"doc-link\" href=\"docs/car/CAR_39.527.pdf\" target=\"_blank\" rel=\"noopener\">CAR 39.527</a>", layer: doc_car_39527},
+                {label: "<a class=\"doc-link\" href=\"docs/car/CAR_39.528.pdf\" target=\"_blank\" rel=\"noopener\">CAR 39.528</a>", layer: doc_car_39528}
+            ]},
+            {label: '<b>CCIR (PDF)</b>', collapsed: true, selectAllCheckbox: false, children: [
+                {label: "<a class=\"doc-link\" href=\"docs/ccir/CCIR_16.090.pdf\" target=\"_blank\" rel=\"noopener\">CCIR 16.090</a>", layer: doc_ccir_16090},
+                {label: "<a class=\"doc-link\" href=\"docs/ccir/CCIR_16.092_AB.pdf\" target=\"_blank\" rel=\"noopener\">CCIR 16.092 (A/B)</a>", layer: doc_ccir_16092_ab},
+                {label: "<a class=\"doc-link\" href=\"docs/ccir/CCIR_16.094_AB.pdf\" target=\"_blank\" rel=\"noopener\">CCIR 16.094 (A/B)</a>", layer: doc_ccir_16094_ab},
+                {label: "<a class=\"doc-link\" href=\"docs/ccir/CCIR_16.100.pdf\" target=\"_blank\" rel=\"noopener\">CCIR 16.100</a>", layer: doc_ccir_16100},
+                {label: "<a class=\"doc-link\" href=\"docs/ccir/CCIR_16.101.pdf\" target=\"_blank\" rel=\"noopener\">CCIR 16.101</a>", layer: doc_ccir_16101},
+                {label: "<a class=\"doc-link\" href=\"docs/ccir/CCIR_16.102_16.103.pdf\" target=\"_blank\" rel=\"noopener\">CCIR 16.102 + 16.103</a>", layer: doc_ccir_16102_16103},
+                {label: "<a class=\"doc-link\" href=\"docs/ccir/CCIR_39.018.pdf\" target=\"_blank\" rel=\"noopener\">CCIR 39.018</a>", layer: doc_ccir_39018},
+                {label: "<a class=\"doc-link\" href=\"docs/ccir/CCIR_39.022.pdf\" target=\"_blank\" rel=\"noopener\">CCIR 39.022</a>", layer: doc_ccir_39022},
+                {label: "<a class=\"doc-link\" href=\"docs/ccir/CCIR_39.525_39.526.pdf\" target=\"_blank\" rel=\"noopener\">CCIR 39.525 + 39.526</a>", layer: doc_ccir_39525_39526},
+                {label: "<a class=\"doc-link\" href=\"docs/ccir/CCIR_39.527_39.528.pdf\" target=\"_blank\" rel=\"noopener\">CCIR 39.527 + 39.528</a>", layer: doc_ccir_39527_39528}
+            ]},
+            {label: '<b>ITR (PDF)</b>', collapsed: true, selectAllCheckbox: false, children: [
+                {label: "<a class=\"doc-link\" href=\"docs/itr/ITR_16.090.pdf\" target=\"_blank\" rel=\"noopener\">ITR 16.090</a>", layer: doc_itr_16090},
+                {label: "<a class=\"doc-link\" href=\"docs/itr/ITR_16.092.pdf\" target=\"_blank\" rel=\"noopener\">ITR 16.092</a>", layer: doc_itr_16092},
+                {label: "<a class=\"doc-link\" href=\"docs/itr/ITR_16.094.pdf\" target=\"_blank\" rel=\"noopener\">ITR 16.094</a>", layer: doc_itr_16094},
+                {label: "<a class=\"doc-link\" href=\"docs/itr/ITR_16.100_16.101_16.102_16.103.pdf\" target=\"_blank\" rel=\"noopener\">ITR 16.100 + 16.101 + 16.102 + 16.103</a>", layer: doc_itr_16100_16101_16102_16103},
+                {label: "<a class=\"doc-link\" href=\"docs/itr/ITR_39.018.pdf\" target=\"_blank\" rel=\"noopener\">ITR 39.018</a>", layer: doc_itr_39018},
+                {label: "<a class=\"doc-link\" href=\"docs/itr/ITR_39.022.pdf\" target=\"_blank\" rel=\"noopener\">ITR 39.022</a>", layer: doc_itr_39022},
+                {label: "<a class=\"doc-link\" href=\"docs/itr/ITR_39.525_39.526.pdf\" target=\"_blank\" rel=\"noopener\">ITR 39.525 + 39.526</a>", layer: doc_itr_39525_39526},
+                {label: "<a class=\"doc-link\" href=\"docs/itr/ITR_39.527_39.528.pdf\" target=\"_blank\" rel=\"noopener\">ITR 39.527 + 39.528</a>", layer: doc_itr_39527_39528}
+            ]}
+        ]},
+];
+        var lay = L.control.layers.tree(null, overlaysTree,{
+            //namedToggle: true,
+            //selectorBack: false,
+            //closedSymbol: '&#8862; &#x1f5c0;',
+            //openedSymbol: '&#8863; &#x1f5c1;',
+            //collapseAll: 'Collapse all',
+            //expandAll: 'Expand all',
+            collapsed: true,
+        });
+        lay.addTo(map);
+        // ====== Documentação (PDF): itens como links (sem checkbox / sem estado de layer) ======
+        function setupDocLinks(){
+            try{
+                if (typeof lay === 'undefined' || !lay || !lay._container) return;
+
+                var links = lay._container.querySelectorAll('a.doc-link');
+                for (var i=0; i<links.length; i++){
+                    (function(a){
+                        // Evita que o clique no link "vaze" para o LI e tente alternar layers
+                        a.addEventListener('click', function(ev){
+                            ev.stopPropagation();
+                        }, true);
+
+                        var li = a.closest('li');
+                        if (li){
+                            // Esconde e desabilita o checkbox do item (se existir)
+                            var input = li.querySelector('input[type="checkbox"]');
+                            if (input){
+                                input.checked = false;
+                                input.disabled = true;
+                                input.style.display = 'none';
+                            }
+
+                            // Bloqueia clique no item (fora do link) para não alternar layer
+                            li.addEventListener('click', function(ev){
+                                if (ev.target && ev.target.closest && ev.target.closest('a.doc-link')) return;
+                                ev.stopPropagation();
+                                ev.preventDefault();
+                            }, true);
+                        }
+                    })(links[i]);
+                }
+            }catch(err){}
+        }
+        // roda após renderizar o controle
+        setTimeout(setupDocLinks, 0);
+
+        setBounds();
+        var i = 0;
+        layer_Matrculas_25.eachLayer(function(layer) {
+            var context = {
+                feature: layer.feature,
+                variables: {}
+            };
+            layer.bindTooltip((layer.feature.properties['Matrículas'] !== null?String('<div class="matricula-label" style="color: #323232; font-size: 10pt; font-weight: bold; font-family: \'Arial\', sans-serif;">' + layer.feature.properties['Matrículas']) + '</div>':''), {permanent: true, offset: [-0, -16], className: 'css_Matrculas_25'});
+            labels.push(layer);
+            totalMarkers += 1;
+              layer.added = true;
+              addLabel(layer, i);
+              i++;
+        });
+        L.ImageOverlay.include({
+            getBounds: function () {
+                return this._bounds;
+            }
+        });
+        resetLabels([layer_ProjetodeSupressodeVegetao_24,layer_Matrculas_25]);
+        map.on("zoomend", function(){
+            resetLabels([layer_ProjetodeSupressodeVegetao_24,layer_Matrculas_25]);
+        });
+        map.on("layeradd", function(){
+            resetLabels([layer_ProjetodeSupressodeVegetao_24,layer_Matrculas_25]);
+        });
+        map.on("layerremove", function(){
+            resetLabels([layer_ProjetodeSupressodeVegetao_24,layer_Matrculas_25]);
+        });
+        </script>        
+    </body>
+</html>

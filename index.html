@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Portal Santa Lúcia – Mapas Interativos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: #1f4b70;
+      color: #fff;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .brand-logo img {
+      max-height: 48px;
+      width: auto;
+      display: block;
+    }
+
+    .brand-text h1 {
+      font-size: 18px;
+      margin-bottom: 2px;
+    }
+
+    .brand-text p {
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
+    main {
+      flex: 1;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    .intro {
+      margin-bottom: 16px;
+    }
+
+    .intro h2 {
+      font-size: 20px;
+      margin-bottom: 4px;
+    }
+
+    .intro p {
+      font-size: 14px;
+      color: #555;
+    }
+
+    .section-header {
+      margin-top: 22px;
+      margin-bottom: 6px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .card-link {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 14px 16px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      height: 100%;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    }
+
+    .card-title {
+      font-weight: bold;
+      font-size: 15px;
+      margin-bottom: 2px;
+    }
+
+    .card-subtitle {
+      font-size: 13px;
+      color: #777;
+    }
+
+    .card-meta {
+      margin-top: 6px;
+      font-size: 12px;
+      color: #666;
+    }
+
+    .card-pending {
+      border-left: 4px solid #f0ad4e;
+    }
+
+    .card-active {
+      border-left: 4px solid #1f8b4c;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 11px;
+      color: #777;
+      padding: 10px 0 14px 0;
+    }
+
+    @media (max-width: 600px) {
+      header {
+        padding: 12px 16px;
+      }
+
+      .brand-text h1 {
+        font-size: 16px;
+      }
+
+      .intro h2 {
+        font-size: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="brand-logo">
+        <!-- Logotipo do cliente -->
+        <img src="images/logo-site-final-2.png" alt="Santa Lúcia">
+      </div>
+      <div class="brand-text">
+        <h1>Portal Santa Lúcia – Mapas Interativos</h1>
+        <p>Uso do solo, áreas de Pinus, inventário e análises espaciais.</p>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="intro">
+      <h2>Selecione a propriedade</h2>
+      <p>
+        Clique em uma das propriedades abaixo para acessar o mapa interativo.
+        Conforme os projetos forem concluídos, cada botão será associado ao
+        respectivo mapa detalhado.
+      </p>
+    </section>
+
+    <!-- Áreas Arrendadas -->
+    <section class="intro section-header">
+      <h2>Áreas arrendadas</h2>
+      <p>Propriedades operadas sob arrendamento.</p>
+    </section>
+
+    <section class="grid">
+      <a class="card-link"
+         href="fazendas_arrendadas/fazenda_santo_antonio/index.html"
+         target="_blank">
+        <article class="card card-active">
+          <div>
+            <div class="card-title">Fazenda Santo Antônio</div>
+            <div class="card-subtitle">Área arrendada</div>
+          </div>
+          <div class="card-meta">
+            Mapa interativo, uso do solo, ortomosaico e documentação fundiária.
+          </div>
+        </article>
+      </a>
+    </section>
+
+    <!-- Áreas Próprias -->
+    <section class="intro section-header">
+      <h2>Áreas próprias</h2>
+      <p>Propriedades próprias do cliente.</p>
+    </section>
+
+    <section class="grid">
+      <!-- Propriedade 2 -->
+      <a class="card-link" href="#" target="_blank">
+        <article class="card card-pending">
+          <div>
+            <div class="card-title">Propriedade 02</div>
+            <div class="card-subtitle">Em breve: link para o mapa</div>
+          </div>
+          <div class="card-meta">
+            Análises de talhões, classes de idade e potenciais áreas exploráveis.
+          </div>
+        </article>
+      </a>
+
+      <!-- Propriedade 3 -->
+      <a class="card-link" href="#" target="_blank">
+        <article class="card card-pending">
+          <div>
+            <div class="card-title">Propriedade 03</div>
+            <div class="card-subtitle">Em breve: link para o mapa</div>
+          </div>
+          <div class="card-meta">
+            Identificação de áreas de APP, regeneração e uso atual do solo.
+          </div>
+        </article>
+      </a>
+
+      <!-- Propriedade 4 -->
+      <a class="card-link" href="#" target="_blank">
+        <article class="card card-pending">
+          <div>
+            <div class="card-title">Propriedade 04</div>
+            <div class="card-subtitle">Em breve: link para o mapa</div>
+          </div>
+          <div class="card-meta">
+            Mapa de uso do solo e classificação das áreas produtivas.
+          </div>
+        </article>
+      </a>
+
+      <!-- Propriedade 5 -->
+      <a class="card-link" href="#" target="_blank">
+        <article class="card card-pending">
+          <div>
+            <div class="card-title">Propriedade 05</div>
+            <div class="card-subtitle">Em breve: link para o mapa</div>
+          </div>
+          <div class="card-meta">
+            Inventário de Pinus, áreas passíveis de exploração e restrições.
+          </div>
+        </article>
+      </a>
+    </section>
+  </main>
+
+  <footer>
+    EcoMap – Levantamentos aéreos com drones, mapeamentos e soluções ambientais.
+  </footer>
+</body>
+</html>
