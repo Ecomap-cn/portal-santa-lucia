@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Tabela de Uso do Solo – Áreas</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body{
+      font-family: Arial, Helvetica, sans-serif;
+      margin: 24px;
+      color: #111;
+      font-size: 16px;
+    }
+
+    .header{
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      margin-bottom: 30px;
+    }
+
+    .header h1{
+      font-size: 24px;
+      margin: 0;
+      text-align: center;
+    }
+
+    .logo{
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      max-height: 55px;
+    }
+
+    table{
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 16px;
+    }
+
+    th, td{
+      border: 1px solid #333;
+      padding: 8px 10px;
+      vertical-align: middle;
+    }
+
+    th{
+      background: #f2f2f2;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    td{
+      text-align: right;
+    }
+
+    td.left{
+      text-align: left;
+    }
+
+    td.center{
+      text-align: center;
+    }
+
+    .total-row{
+      font-weight: bold;
+    }
+
+    .area-total{
+      background: #19a84a;
+      color: #000;
+      font-weight: bold;
+    }
+
+    .footer{
+      margin-top: 28px;
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    @media (max-width: 768px){
+      body{
+        margin: 16px;
+        font-size: 15px;
+      }
+
+      .header h1{
+        font-size: 20px;
+      }
+
+      table{
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="header">
+    <h1>Tabela de Uso do Solo – Áreas</h1>
+   <img src="images/logo-site-final-2.png" class="logo" alt="Logo Santa Lúcia Madeiras">
+  </div>
+
+  <table>
+    <tr>
+      <th>Uso do Solo</th>
+      <th>Descrição</th>
+      <th>Área (ha)</th>
+    </tr>
+
+    <tr>
+      <td rowspan="8" class="left"><b>Pinus Plantado 2025</b></td>
+      <td class="left">Matrícula 16.092</td>
+      <td>8,210</td>
+    </tr>
+    <tr><td class="left">Matrícula 16.094</td><td>37,514</td></tr>
+    <tr><td class="left">Matrícula 16.100</td><td>74,060</td></tr>
+    <tr><td class="left">Matrícula 16.101</td><td>6,228</td></tr>
+    <tr><td class="left">Matrícula 16.103</td><td>0,039</td></tr>
+    <tr><td class="left">Matrícula 39.525</td><td>4,465</td></tr>
+    <tr><td class="left">Matrícula 39.527</td><td>12,815</td></tr>
+    <tr class="total-row">
+      <td class="center">Total</td>
+      <td>143,331</td>
+    </tr>
+
+    <tr><td class="left"><b>Área a ser plantada 2026</b></td><td></td><td>14,258</td></tr>
+    <tr><td class="left"><b>Lavoura</b></td><td></td><td>94,417</td></tr>
+    <tr><td class="left"><b>Estradas</b></td><td></td><td>8,627</td></tr>
+    <tr><td class="left"><b>Faixa de Servidão – Redes Elétricas</b></td><td></td><td>10,119</td></tr>
+    <tr><td class="left"><b>APP</b></td><td></td><td>62,268</td></tr>
+    <tr><td class="left"><b>Remanescente de Vegetação Nativa</b></td><td></td><td>669,706</td></tr>
+    <tr><td class="left"><b>Açudes (Fora das APP's)</b></td><td></td><td>0,374</td></tr>
+
+    <tr class="area-total">
+      <td colspan="2" class="left">Área Total das Matrículas</td>
+      <td>1003,1</td>
+    </tr>
+  </table>
+
+  <div class="footer">
+    Projeto de Supressão (Conversão de Remanescente de vegetação nativa em área produtiva): <b>54,92 ha</b>
+  </div>
+
+</body>
+</html>

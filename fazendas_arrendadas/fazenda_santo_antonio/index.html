@@ -115,6 +115,7 @@
             .map-title{
                 top: 8px;
             }
+            body.layers-open .map-title{display:none;}
             .map-title .t1{
                 font-size: 14px;
             }
@@ -1265,6 +1266,7 @@
         var doc_itr_39022 = createDocLayer('docs/itr/ITR_39.022.pdf');
         var doc_itr_39525_39526 = createDocLayer('docs/itr/ITR_39.525_39.526.pdf');
         var doc_itr_39527_39528 = createDocLayer('docs/itr/ITR_39.527_39.528.pdf');
+        var doc_uso_do_solo = createDocLayer('uso_do_solo.html');
 
         // Abre PDF em nova aba ao clicar no item e desmarca automaticamente
 var overlaysTree = [
@@ -1352,6 +1354,8 @@ var overlaysTree = [
                 {label: "<a class=\"doc-link\" href=\"docs/itr/ITR_39.527_39.528.pdf\" target=\"_blank\" rel=\"noopener\">ITR 39.527 + 39.528</a>", layer: doc_itr_39527_39528}
             ]}
         ]},
+        {label: "<a class=\"doc-link\" href=\"uso_do_solo.html\" target=\"_blank\" rel=\"noopener\">Tabela de Uso do Solo - Áreas</a>", layer: doc_uso_do_solo}
+
 ];
         var lay = L.control.layers.tree(null, overlaysTree,{
             //namedToggle: true,
@@ -1363,6 +1367,33 @@ var overlaysTree = [
             collapsed: true,
         });
         lay.addTo(map);
+
+        // ====== Mobile: ocultar título quando o painel de camadas estiver aberto ======
+        (function(){
+            try{
+                if (!lay || !lay._container) return;
+                var container = lay._container; // div.leaflet-control-layers
+                function sync(){
+                    var expanded = container.classList.contains('leaflet-control-layers-expanded');
+                    document.body.classList.toggle('layers-open', expanded);
+                }
+                // Sincroniza no carregamento
+                sync();
+
+                // Observa mudanças de classe (quando abre/fecha)
+                var mo = new MutationObserver(function(muts){ sync(); });
+                mo.observe(container, { attributes: true, attributeFilter: ['class'] });
+
+                // Fallback: após clique no botão de camadas
+                var toggle = container.querySelector('.leaflet-control-layers-toggle');
+                if (toggle){
+                    toggle.addEventListener('click', function(){ setTimeout(sync, 0); }, true);
+                }
+                // Se clicar no mapa (em mobile), tenta ressincronizar
+                map.on('click', function(){ setTimeout(sync, 0); });
+            }catch(e){}
+        })();
+
         // ====== Documentação (PDF): itens como links (sem checkbox / sem estado de layer) ======
         function setupDocLinks(){
             try{
