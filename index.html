@@ -147,6 +147,24 @@
       padding: 10px 0 14px 0;
     }
 
+    
+    .logout-wrap{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .logout-btn{
+      border:1px solid rgba(255,255,255,.55);
+      background: rgba(255,255,255,.12);
+      color:#fff;
+      font-weight:700;
+      padding:8px 12px;
+      border-radius:8px;
+      cursor:pointer;
+    }
+    .logout-btn:hover{ background: rgba(255,255,255,.18); }
+
+
     @media (max-width: 600px) {
       header {
         padding: 12px 16px;
@@ -161,6 +179,39 @@
       }
     }
   </style>
+
+  <script>
+  (function(){
+    const KEY_AUTH = "SL_AUTH";
+    const KEY_EXP = "SL_EXPIRY";
+    function logout(){
+      try{ sessionStorage.removeItem(KEY_AUTH); sessionStorage.removeItem(KEY_EXP); }catch(e){}
+      const here = location.pathname.split('/').pop() || 'index.html';
+      location.replace('login.html?next=' + encodeURIComponent(here));
+    }
+    function requireAuth(){
+      let ok=false, exp=0;
+      try{ ok = sessionStorage.getItem(KEY_AUTH)==="1"; exp = parseInt(sessionStorage.getItem(KEY_EXP)||"0",10);}catch(e){}
+      const now = Date.now();
+      if(!ok || !exp || now>=exp){
+        logout();
+        return;
+      }
+      // auto-logout at expiry (23:59)
+      const ms = exp - now;
+      if(ms>0 && ms<2147483000){
+        setTimeout(logout, ms);
+      }
+      window.SL_logout = logout;
+    }
+    document.addEventListener('DOMContentLoaded', function(){
+      requireAuth();
+      const btn = document.getElementById('btnLogout');
+      if(btn) btn.addEventListener('click', function(){ logout(); });
+    });
+  })();
+  </script>
+
 </head>
 <body>
   <header>
@@ -173,6 +224,10 @@
         <h1>Portal Santa Lúcia – Mapas Interativos</h1>
         <p>Uso do solo, áreas de Pinus, inventário e análises espaciais.</p>
       </div>
+    </div>
+  
+    <div class="logout-wrap">
+      <button id="btnLogout" type="button" class="logout-btn" title="Sair">Sair</button>
     </div>
   </header>
 

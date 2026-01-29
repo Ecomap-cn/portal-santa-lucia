@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Portal Santa Lúcia – Acesso</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      font-family: Arial, Helvetica, sans-serif;
+      background:#f5f5f5;
+      color:#222;
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+    }
+    header{
+      background:#1f4b70;
+      color:#fff;
+      padding:16px 24px;
+      display:flex;
+      align-items:center;
+      gap:14px;
+      flex-wrap:wrap;
+    }
+    header img{height:48px;width:auto;display:block}
+    header .t1{font-size:18px;font-weight:700;line-height:1.2}
+    header .t2{font-size:12px;opacity:.9}
+    main{
+      flex:1;
+      max-width:520px;
+      width:100%;
+      margin:0 auto;
+      padding:22px 16px 16px 16px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:center;
+    }
+    .card{
+      width:100%;
+      background:#fff;
+      border-radius:12px;
+      box-shadow:0 2px 12px rgba(0,0,0,.10);
+      padding:18px 18px 16px 18px;
+    }
+    h2{font-size:18px;margin-bottom:6px}
+    p{font-size:13px;color:#555;margin-bottom:12px;line-height:1.35}
+    label{display:block;font-size:12px;color:#333;margin:10px 0 6px}
+    input{
+      width:100%;
+      border:1px solid #d4d4d4;
+      border-radius:10px;
+      padding:10px 12px;
+      font-size:14px;
+      outline:none;
+    }
+    input:focus{border-color:#1f4b70; box-shadow:0 0 0 3px rgba(31,75,112,.12)}
+    .row{display:flex;gap:10px;align-items:center;margin-top:14px}
+    button{
+      width:100%;
+      border:none;
+      background:#1f4b70;
+      color:#fff;
+      font-weight:800;
+      padding:10px 12px;
+      border-radius:10px;
+      cursor:pointer;
+      font-size:14px;
+    }
+    button:hover{filter:brightness(1.03)}
+    .msg{
+      margin-top:10px;
+      font-size:12px;
+      color:#b00020;
+      min-height:16px;
+    }
+    .hint{
+      margin-top:12px;
+      font-size:11px;
+      color:#666;
+    }
+    footer{
+      text-align:center;
+      font-size:11px;
+      color:#777;
+      padding:10px 0 14px 0;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="images/logo-site-final-2.png" alt="Santa Lúcia">
+    <div>
+      <div class="t1">Portal Santa Lúcia – Mapas Interativos</div>
+      <div class="t2">Acesso restrito.</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="card">
+      <h2>Entrar</h2>
+      <p>Informe seu login e senha para acessar o portal.</p>
+
+      <form id="loginForm" autocomplete="off">
+        <label for="user">Login</label>
+        <input id="user" name="user" type="text" inputmode="text" placeholder="Digite o login" required />
+
+        <label for="pass">Senha</label>
+        <input id="pass" name="pass" type="password" placeholder="Digite a senha" required />
+
+        <div class="row">
+          <button type="submit">Acessar</button>
+        </div>
+        <div id="msg" class="msg"></div>
+        <div class="hint">Obs.: por segurança, o acesso expira diariamente às <b>23:59</b>.</div>
+      </form>
+    </div>
+  </main>
+
+  <footer>EcoMap – Levantamentos aéreos com drones, mapeamentos e soluções ambientais.</footer>
+
+<script>
+(function(){
+  const LOGIN = "santalucia2026";
+  const PASS  = "santalucia2026";
+  const KEY_AUTH = "SL_AUTH";
+  const KEY_EXP  = "SL_EXPIRY";
+
+  function endOfDayExpiry(){
+    const now = new Date();
+    const exp = new Date(now);
+    exp.setHours(23,59,0,0); // 23:59:00
+    if(exp.getTime() <= now.getTime()){
+      exp.setDate(exp.getDate()+1);
+      exp.setHours(23,59,0,0);
+    }
+    return exp.getTime();
+  }
+
+  function getNext(){
+    const p = new URLSearchParams(location.search);
+    const next = p.get("next") || "index.html";
+    // só permite navegar dentro do portal (sem URLs externas)
+    if(next.includes("://") || next.startsWith("//")) return "index.html";
+    return next;
+  }
+
+  // Se já estiver logado e válido, manda direto
+  (function autoBypass(){
+    let ok=false, exp=0;
+    try{ ok = sessionStorage.getItem(KEY_AUTH)==="1"; exp = parseInt(sessionStorage.getItem(KEY_EXP)||"0",10);}catch(e){}
+    if(ok && exp && Date.now() < exp){
+      location.replace(getNext());
+    }
+  })();
+
+  const form = document.getElementById("loginForm");
+  const msg  = document.getElementById("msg");
+
+  form.addEventListener("submit", function(e){
+    e.preventDefault();
+    msg.textContent = "";
+
+    const u = (document.getElementById("user").value || "").trim();
+    const p = (document.getElementById("pass").value || "");
+
+    if(u === LOGIN && p === PASS){
+      try{
+        sessionStorage.setItem(KEY_AUTH, "1");
+        sessionStorage.setItem(KEY_EXP, String(endOfDayExpiry()));
+      }catch(err){}
+      location.replace(getNext());
+      return;
+    }
+
+    msg.textContent = "Login ou senha inválidos.";
+  });
+
+  // UX: foco no login
+  document.getElementById("user").focus();
+})();
+</script>
+</body>
+</html>
