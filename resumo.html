@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<title>Resumo Geral – Áreas Plantadas</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Arial,Helvetica,sans-serif;background:#f5f5f5;color:#222;min-height:100vh}
+  header{background:#1f4b70;color:#fff;padding:14px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  header img{height:42px;width:auto;display:block}
+  header .t1{font-size:18px;font-weight:700;line-height:1.2}
+  header .t2{font-size:12px;opacity:.9}
+  main{max-width:1400px;margin:0 auto;padding:16px}
+  .card{background:#fff;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.08);padding:14px}
+  h2{font-size:18px;margin-bottom:6px}
+  p{font-size:13px;color:#555;margin-bottom:10px}
+  .table-wrap{border:1px solid #d9d9d9;border-radius:10px;overflow:auto;max-height:62vh;background:#fff}
+  table{border-collapse:separate;border-spacing:0;min-width:1600px;width:max-content}
+  thead th{position:sticky;top:0;background:#f0f6ff;z-index:5;font-size:12px;color:#0f2e4a;border-bottom:1px solid #cfd9e6;padding:8px 10px;white-space:nowrap}
+  thead tr.super th{top:0;background:#e6f0ff;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.3px}
+  thead tr.cols th{top:33px} /* altura aproximada da linha super */
+  td{font-size:12px;border-bottom:1px solid #eee;border-right:1px solid #eee;padding:7px 10px;white-space:nowrap;background:#fff}
+  tr:nth-child(even) td{background:#fbfbfb}
+  .num{text-align:center;min-width:44px}
+  .totalcol{font-weight:800}
+  .total-row td{background:#fff7e6 !important;font-weight:800;border-top:2px solid #f0c36d}
+  /* Sticky columns (1ª a 8ª) */
+  td.sticky, th.sticky{position:sticky;left:0;z-index:6;background:inherit}
+  .c0{left:0;z-index:7}
+  .c1{left:220px}
+  .c2{left:300px}
+  .c3{left:430px}
+  .c4{left:560px}
+  .c5{left:700px}
+  .c6{left:820px}
+  .c7{left:940px}
+  /* widths for sticky columns */
+  td.c0, th.c0{min-width:220px}
+  td.c1, th.c1{min-width:80px;text-align:center}
+  td.c2, th.c2{min-width:130px}
+  td.c3, th.c3{min-width:130px}
+  td.c4, th.c4{min-width:140px}
+  td.c5, th.c5{min-width:120px;text-align:center}
+  td.c6, th.c6{min-width:120px;text-align:center}
+  td.c7, th.c7{min-width:120px;text-align:center}
+  thead th.c0, thead th.c1, thead th.c2, thead th.c3, thead th.c4, thead th.c5, thead th.c6, thead th.c7{z-index:8}
+  /* garantir borda na coluna travada */
+  td.c7, th.c7{border-right:2px solid #cfd9e6}
+  footer{text-align:center;font-size:11px;color:#777;padding:10px 0 14px}
+  @media (max-width:700px){
+    header .t1{font-size:16px}
+    main{padding:12px}
+    .table-wrap{max-height:70vh}
+  }
+</style>
+</head>
+<body>
+<header>
+  <img src="images/logo-site-final-2.png" alt="Santa Lúcia">
+  <div>
+    <div class="t1">Resumo Geral – Áreas Plantadas</div>
+    <div class="t2">Consolidado por fazenda e por ano de plantio (ha).</div>
+  </div>
+</header>
+
+<main>
+  <div class="card">
+    <h2>Tabela consolidada</h2>
+    <p>Use a rolagem horizontal (X) e vertical (Y). Cabeçalho e colunas iniciais ficam travados para facilitar a leitura.</p>
+
+    <div class="table-wrap" role="region" aria-label="Tabela de áreas plantadas">
+      <table>
+        <thead>
+          <tr class="super">
+            <th class="sticky c0" rowspan="2">FAZENDA</th>
+            <th class="sticky c1" rowspan="2">MATRÍCULA</th>
+            <th class="sticky c2" rowspan="2">PROPRIETÁRIO</th>
+            <th class="sticky c3" rowspan="2">MUNICÍPIO</th>
+            <th class="sticky c4" rowspan="2">ESPÉCIE</th>
+            <th class="sticky c5" rowspan="2">ESPAÇAMENTO</th>
+            <th class="sticky c6" rowspan="2">DENSIDADE</th>
+            <th class="sticky c7" rowspan="2">STATUS</th>
+            <th colspan="28">ÁREA PLANTADA POR ANO DE PLANTIO (ha)</th>
+          </tr>
+          <tr class="cols">
+            <th class="year">2026</th><th class="year">2025</th><th class="year">2024</th><th class="year">2023</th><th class="year">2022</th><th class="year">2021</th><th class="year">2020</th><th class="year">2019</th><th class="year">2018</th><th class="year">2017</th><th class="year">2016</th><th class="year">2015</th><th class="year">2014</th><th class="year">2013</th><th class="year">2012</th><th class="year">2011</th><th class="year">2010</th><th class="year">2009</th><th class="year">2008</th><th class="year">2007</th><th class="year">2006</th><th class="year">2005</th><th class="year">2004</th><th class="year">2003</th><th class="year">2002</th><th class="year">2001</th><th class="year">2000</th><th class="year totalcol">TOTAL</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class=""><td class="sticky c0">Fazenda Santo Antônio</td><td class="sticky c1">16094</td><td class="sticky c2">Cesar</td><td class="sticky c3">Abdon Batista</td><td class="sticky c4">Pinus taeda</td><td class="sticky c5">2,70x2,70</td><td class="sticky c6">1372</td><td class="sticky c7">SEM DESBASTE</td><td class="num">-</td><td class="num">37,51</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num totalcol">37,51</td></tr>
+<tr class=""><td class="sticky c0">Fazenda Santo Antônio</td><td class="sticky c1">16092</td><td class="sticky c2">Fátima</td><td class="sticky c3">Abdon Batista</td><td class="sticky c4">Pinus taeda</td><td class="sticky c5">2,70x2,70</td><td class="sticky c6">1372</td><td class="sticky c7">SEM DESBASTE</td><td class="num">-</td><td class="num">8,21</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num totalcol">8,21</td></tr>
+<tr class=""><td class="sticky c0">Fazenda Santo Antônio</td><td class="sticky c1">16101</td><td class="sticky c2">Cesar Fátima e Marco</td><td class="sticky c3">Abdon Batista</td><td class="sticky c4">Pinus taeda</td><td class="sticky c5">2,70x2,70</td><td class="sticky c6">1372</td><td class="sticky c7">SEM DESBASTE</td><td class="num">-</td><td class="num">6,23</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num totalcol">6,23</td></tr>
+<tr class=""><td class="sticky c0">Fazenda Santo Antônio</td><td class="sticky c1">16103</td><td class="sticky c2">Cesar Fátima e Andréa</td><td class="sticky c3">Abdon Batista</td><td class="sticky c4">Pinus taeda</td><td class="sticky c5">2,70x2,70</td><td class="sticky c6">1372</td><td class="sticky c7">SEM DESBASTE</td><td class="num">-</td><td class="num">0,04</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num totalcol">0,04</td></tr>
+<tr class=""><td class="sticky c0">Fazenda Santo Antônio</td><td class="sticky c1">16100</td><td class="sticky c2">Cesar Fátima e Jane</td><td class="sticky c3">Abdon Batista</td><td class="sticky c4">Pinus taeda</td><td class="sticky c5">2,70x2,70</td><td class="sticky c6">1372</td><td class="sticky c7">SEM DESBASTE</td><td class="num">-</td><td class="num">74,06</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num totalcol">74,06</td></tr>
+<tr class=""><td class="sticky c0">Fazenda Santo Antônio</td><td class="sticky c1">39527</td><td class="sticky c2">Cesar Fátima e Jane</td><td class="sticky c3">Abdon Batista</td><td class="sticky c4">Pinus taeda</td><td class="sticky c5">2,70x2,70</td><td class="sticky c6">1372</td><td class="sticky c7">SEM DESBASTE</td><td class="num">-</td><td class="num">12,82</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num totalcol">12,82</td></tr>
+<tr class=""><td class="sticky c0">Fazenda Santo Antônio</td><td class="sticky c1">39525</td><td class="sticky c2">Cesar Fátima e Marco</td><td class="sticky c3">Abdon Batista</td><td class="sticky c4">Pinus taeda</td><td class="sticky c5">2,70x2,70</td><td class="sticky c6">1372</td><td class="sticky c7">SEM DESBASTE</td><td class="num">-</td><td class="num">4,47</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num totalcol">4,47</td></tr>
+<tr class="total-row"><td class="sticky c0">Total</td><td class="sticky c1">—</td><td class="sticky c2">—</td><td class="sticky c3">—</td><td class="sticky c4">—</td><td class="sticky c5">—</td><td class="sticky c6">—</td><td class="sticky c7">—</td><td class="num">-</td><td class="num">143,33</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num">-</td><td class="num totalcol">143,33</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<footer>EcoMap – Levantamentos aéreos com drones, mapeamentos e soluções ambientais.</footer>
+</body>
+</html>
