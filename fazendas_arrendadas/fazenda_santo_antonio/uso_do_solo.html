@@ -1,49 +1,62 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <title>Tabela de Uso do Solo – Áreas</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
     body{
       font-family: Arial, Helvetica, sans-serif;
       margin: 24px;
+      background: #ffffff;
       color: #111;
       font-size: 16px;
     }
 
+    /* ===== Cabeçalho (DESKTOP) ===== */
     .header{
-      display: flex;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr; /* espaço | título | logo */
       align-items: center;
-      justify-content: center;
-      position: relative;
-      margin-bottom: 30px;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #222;
     }
 
     .header h1{
-      font-size: 24px;
+      grid-column: 2;
       margin: 0;
+      font-size: 26px;
       text-align: center;
+      font-weight: 700;
+      line-height: 1.15;
+    }
+
+    .logo-wrap{
+      grid-column: 3;
+      justify-self: end;
+      display: flex;
+      align-items: center;
     }
 
     .logo{
-      position: absolute;
-      right: 0;
-      top: 50%;
-      transform: translateY(-50%);
-      max-height: 55px;
+      max-height: 64px;
+      height: auto;
+      width: auto;
+      display: block;
     }
 
+    /* ===== Tabela ===== */
     table{
       width: 100%;
       border-collapse: collapse;
-      font-size: 16px;
+      margin-top: 18px;
     }
 
     th, td{
       border: 1px solid #333;
-      padding: 8px 10px;
+      padding: 10px 12px;
       vertical-align: middle;
     }
 
@@ -53,42 +66,65 @@
       text-align: center;
     }
 
-    td{
-      text-align: right;
+    /* padrão */
+    td{ text-align: left; }
+
+    /* Coluna numérica: sempre centralizar o ÚLTIMO TD da linha (funciona com rowspan/colspan) */
+    tbody td:last-child{
+      text-align: center !important;
+      white-space: nowrap;
     }
 
-    td.left{
+    /* coluna Descrição alinhada à esquerda */
+    tbody td:nth-child(2){
       text-align: left;
     }
 
-    td.center{
-      text-align: center;
+    .grupo{
+      font-weight: 700;
+      background: #fafafa;
     }
 
-    .total-row{
-      font-weight: bold;
+    .total{
+      font-weight: 700;
     }
 
-    .area-total{
-      background: #19a84a;
-      color: #000;
-      font-weight: bold;
+    .total td{
+      font-weight: 700;
     }
 
-    .footer{
-      margin-top: 28px;
-      font-weight: bold;
-      font-size: 16px;
+    .area-total td{
+      background: #18a84a;
+      color: #fff;
+      font-weight: 700;
     }
 
+    /* ===== Responsivo (MOBILE) ===== */
     @media (max-width: 768px){
       body{
         margin: 16px;
         font-size: 15px;
       }
 
+      .header{
+        grid-template-columns: 1fr; /* empilha */
+        justify-items: center;
+        text-align: center;
+        gap: 10px;
+      }
+
       .header h1{
+        grid-column: 1;
         font-size: 20px;
+      }
+
+      .logo-wrap{
+        grid-column: 1;
+        justify-self: center;
+      }
+
+      .logo{
+        max-height: 60px;
       }
 
       table{
@@ -101,50 +137,113 @@
 <body>
 
   <div class="header">
+    <div></div>
     <h1>Tabela de Uso do Solo – Áreas</h1>
-   <img src="images/logo-site-final-2.png" class="logo" alt="Logo Santa Lúcia Madeiras">
+    <div class="logo-wrap">
+      <img src="images/logo-site-final-2.png" class="logo" alt="Santa Lúcia Madeiras">
+    </div>
   </div>
 
   <table>
-    <tr>
-      <th>Uso do Solo</th>
-      <th>Descrição</th>
-      <th>Área (ha)</th>
-    </tr>
+    <thead>
+      <tr>
+        <th>Uso do Solo</th>
+        <th>Descrição</th>
+        <th>Área (ha)</th>
+      </tr>
+    </thead>
+    <tbody>
 
-    <tr>
-      <td rowspan="8" class="left"><b>Pinus Plantado 2025</b></td>
-      <td class="left">Matrícula 16.092</td>
-      <td>8,210</td>
-    </tr>
-    <tr><td class="left">Matrícula 16.094</td><td>37,514</td></tr>
-    <tr><td class="left">Matrícula 16.100</td><td>74,060</td></tr>
-    <tr><td class="left">Matrícula 16.101</td><td>6,228</td></tr>
-    <tr><td class="left">Matrícula 16.103</td><td>0,039</td></tr>
-    <tr><td class="left">Matrícula 39.525</td><td>4,465</td></tr>
-    <tr><td class="left">Matrícula 39.527</td><td>12,815</td></tr>
-    <tr class="total-row">
-      <td class="center">Total</td>
-      <td>143,331</td>
-    </tr>
+      <tr>
+        <td rowspan="8" class="grupo">Pinus Plantado 2025</td>
+        <td>Matrícula 16.092</td>
+        <td>8,210</td>
+      </tr>
+      <tr>
+        <td>Matrícula 16.094</td>
+        <td>37,514</td>
+      </tr>
+      <tr>
+        <td>Matrícula 16.100</td>
+        <td>74,060</td>
+      </tr>
+      <tr>
+        <td>Matrícula 16.101</td>
+        <td>6,228</td>
+      </tr>
+      <tr>
+        <td>Matrícula 16.103</td>
+        <td>0,039</td>
+      </tr>
+      <tr>
+        <td>Matrícula 39.525</td>
+        <td>4,465</td>
+      </tr>
+      <tr>
+        <td>Matrícula 39.527</td>
+        <td>12,815</td>
+      </tr>
+      <tr class="total">
+        <td style="text-align:center;"><b>Total</b></td>
+        <td><b>143,331</b></td>
+      </tr>
 
-    <tr><td class="left"><b>Área a ser plantada 2026</b></td><td></td><td>14,258</td></tr>
-    <tr><td class="left"><b>Lavoura</b></td><td></td><td>94,417</td></tr>
-    <tr><td class="left"><b>Estradas</b></td><td></td><td>8,627</td></tr>
-    <tr><td class="left"><b>Faixa de Servidão – Redes Elétricas</b></td><td></td><td>10,119</td></tr>
-    <tr><td class="left"><b>APP</b></td><td></td><td>62,268</td></tr>
-    <tr><td class="left"><b>Remanescente de Vegetação Nativa</b></td><td></td><td>669,706</td></tr>
-    <tr><td class="left"><b>Açudes (Fora das APP's)</b></td><td></td><td>0,374</td></tr>
+      <tr>
+        <td class="grupo">Área a ser plantada 2026</td>
+        <td></td>
+        <td>14,258</td>
+      </tr>
 
-    <tr class="area-total">
-      <td colspan="2" class="left">Área Total das Matrículas</td>
-      <td>1003,1</td>
-    </tr>
+      <tr>
+        <td class="grupo">Lavoura</td>
+        <td></td>
+        <td>94,417</td>
+      </tr>
+
+      <tr>
+        <td class="grupo">Estradas</td>
+        <td></td>
+        <td>8,627</td>
+      </tr>
+
+      <tr>
+        <td class="grupo">Faixa de Servidão – Redes Elétricas</td>
+        <td></td>
+        <td>10,119</td>
+      </tr>
+
+      <tr>
+        <td class="grupo">APP</td>
+        <td></td>
+        <td>62,268</td>
+      </tr>
+
+      <tr>
+        <td class="grupo">Remanescente de Vegetação Nativa</td>
+        <td></td>
+        <td>669,706</td>
+      </tr>
+
+      <tr>
+        <td class="grupo">Açudes (Fora das APP's)</td>
+        <td></td>
+        <td>0,374</td>
+      </tr>
+
+      <tr class="area-total">
+        <td colspan="2">Área Total das Matrículas</td>
+        <td>1003,1</td>
+      </tr>
+
+      <tr>
+        <td colspan="2" class="grupo">
+          Projeto de Supressão (Conversão de Remanescente de vegetação nativa em área produtiva)
+        </td>
+        <td>54,92</td>
+      </tr>
+
+    </tbody>
   </table>
-
-  <div class="footer">
-    Projeto de Supressão (Conversão de Remanescente de vegetação nativa em área produtiva): <b>54,92 ha</b>
-  </div>
 
 </body>
 </html>
