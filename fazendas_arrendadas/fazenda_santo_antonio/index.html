@@ -25,35 +25,38 @@
         /* ====== Custom UI (desktop + mobile) ====== */
         .map-title{
             position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1000;
-            max-width: calc(100% - 20px);
+            left: 12px;
+            bottom: 8px;
+            top: auto;
+            right: auto;
+            transform: none;
+            z-index: 950;
+            max-width: min(620px, calc(100% - 24px));
             pointer-events: none;
             font-family: Arial, Helvetica, sans-serif;
             color: #111;
-            text-align: center;
+            text-align: left;
         }
         .map-title .box{
             display: inline-block;
             background: rgba(255,255,255,0.92);
-            border: 1px solid rgba(0,0,0,0.25);
-            border-radius: 8px;
-            padding: 8px 12px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+            border: 1px solid rgba(0,0,0,0.22);
+            border-radius: 10px;
+            padding: 6px 10px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.20);
         }
         .map-title .t1{
-            font-weight: 700;
-            font-size: 16px;
-            line-height: 1.2;
+            font-weight: 800;
+            font-size: 13px;
+            line-height: 1.15;
             margin: 0;
         }
         .map-title .t2{
             font-weight: 600;
-            font-size: 13px;
-            line-height: 1.2;
-            margin-top: 4px;
+            font-size: 11px;
+            line-height: 1.15;
+            margin-top: 2px;
+            opacity: .9;
         }
 
         .map-logo{
@@ -113,14 +116,19 @@
         /* Mobile tweaks */
         @media (max-width: 768px){
             .map-title{
-                top: 8px;
+                top: auto;
+                bottom: 10px;
+                left: 10px;
+                right: auto;
+                transform: none;
+                max-width: 88vw;
             }
             body.layers-open .map-title{display:none;}
             .map-title .t1{
-                font-size: 14px;
+                font-size: 12px;
             }
             .map-title .t2{
-                font-size: 12px;
+                font-size: 10.5px;
             }
             .map-logo img{
             display: block;
@@ -135,6 +143,61 @@
                 line-height: 34px;
             }
         }
+        
+        /* ===== EcoMap Controls (Measure) ===== */
+        .ecomap-controls.leaflet-bar a{
+            width:34px; height:34px;
+            line-height:34px;
+            text-align:center;
+            font-size:16px;
+        }
+        .ecomap-controls.leaflet-bar a,
+        .ecomap-controls.leaflet-bar a:hover{
+            background: rgba(255,255,255,0.92);
+            color:#111;
+            border-bottom: 1px solid rgba(0,0,0,0.08);
+        }
+        .ecomap-controls.leaflet-bar a:last-child{
+            border-bottom:none;
+        }
+        .ecomap-controls .is-active{
+            background: #111 !important;
+            color: #fff !important;
+        }
+
+        .ecomap-measure-tooltip{
+            background: rgba(17,17,17,0.92);
+            color:#fff;
+            border:0;
+            border-radius:10px;
+            padding:8px 10px;
+            box-shadow: 0 10px 24px rgba(0,0,0,.25);
+            font-weight:700;
+            font-size:12px;
+        }
+        .ecomap-measure-tooltip:before{
+            border-top-color: rgba(17,17,17,0.92) !important;
+        }
+
+        .ecomap-hint{
+            position: absolute;
+            left: 12px;
+            bottom: 56px;
+            z-index: 980;
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: rgba(17,17,17,0.70);
+            color: rgba(255,255,255,0.92);
+            font-size: 12px;
+            line-height: 1.3;
+            display:none;
+            max-width: 420px;
+            backdrop-filter: blur(6px);
+        }
+        @media (max-width: 700px){
+            .ecomap-hint{max-width: 88vw;}
+        }
+
         </style>
 
         <title></title>
@@ -142,6 +205,7 @@
     <body>
         <div id="map">
         </div>
+        <div class="ecomap-hint" id="ecomapHint"></div>
         <div class="map-title" aria-hidden="true">
             <div class="box">
                 <div class="t1">Fazenda Santo Antônio - Santa Lúcia Madeiras</div>
@@ -248,17 +312,7 @@
             position: 'topleft'
         }).addTo(map);
         L.control.locate({locateOptions: {maxZoom: 19}}).addTo(map);
-        var measureControl = new L.Control.Measure({
-            position: 'topleft',
-            primaryLengthUnit: 'meters',
-            secondaryLengthUnit: 'kilometers',
-            primaryAreaUnit: 'sqmeters',
-            secondaryAreaUnit: 'hectares'
-        });
-        measureControl.addTo(map);
-        document.getElementsByClassName('leaflet-control-measure-toggle')[0].innerHTML = '';
-        document.getElementsByClassName('leaflet-control-measure-toggle')[0].className += ' fas fa-ruler';
-        /* ====== Home / Recenter control (Casinha) ====== */
+/* ====== Home / Recenter control (Casinha) ====== */
         var HomeControl = L.Control.extend({
             options: { position: 'topleft' },
             onAdd: function(map) {
@@ -279,6 +333,417 @@
             }
         });
         map.addControl(new HomeControl());
+
+        // ===== Trena EcoMap (com casas decimais + área/perímetro) =====
+        // Como usar:
+        // 1) Clique na régua para ativar
+        // 2) Clique no mapa para adicionar pontos
+        // 3) Duplo-clique para finalizar
+        // 4) Botão 🗑 para limpar
+        var hintEl = document.getElementById('ecomapHint');
+
+        function showHint(html){
+            if(!hintEl) return;
+            hintEl.innerHTML = html;
+            hintEl.style.display = 'block';
+        }
+        function hideHint(){
+            if(!hintEl) return;
+            hintEl.style.display = 'none';
+        }
+
+        function formatPtBR(n, decimals){
+            try{
+                return n.toLocaleString('pt-BR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+            }catch(e){
+                var s = n.toFixed(decimals);
+                return s.replace('.', ',');
+            }
+        }
+
+        function formatArea(m2){
+            if(m2 >= 10000){
+                return formatPtBR(m2/10000, 4) + ' ha';
+            }
+            return formatPtBR(m2, 2) + ' m²';
+        }
+
+        // Cálculo de área geodésica (sem dependências externas)
+        // Fórmula esférica (variação Chamberlain & Duquette), usada em diversas ferramentas Leaflet.
+        function geodesicArea(latLngs){
+            var points = latLngs;
+            if(!points || points.length < 3) return 0;
+
+            var radius = 6378137; // WGS84 (m)
+            var area = 0;
+
+            for (var i = 0, len = points.length; i < len; i++) {
+                var p1 = points[i];
+                var p2 = points[(i + 1) % len];
+
+                var lon1 = p1.lng * Math.PI / 180;
+                var lon2 = p2.lng * Math.PI / 180;
+                var lat1 = p1.lat * Math.PI / 180;
+                var lat2 = p2.lat * Math.PI / 180;
+
+                area += (lon2 - lon1) * (2 + Math.sin(lat1) + Math.sin(lat2));
+            }
+
+            area = area * radius * radius / 2.0;
+            return Math.abs(area);
+        }
+
+        function formatDistance(meters){
+            if(meters >= 1000){
+                return formatPtBR(meters/1000, 3) + ' km';
+            }
+            return formatPtBR(meters, 2) + ' m';
+        }
+
+        var measureActive = false;
+        var measurePolygon = null;
+        var measurePoints = [];
+        var measureLine = null;
+        var tempLine = null;
+        
+// Pane acima dos overlays para desenhar a Trena EcoMap sempre visível
+map.createPane('pane_EcoMapMeasure');
+map.getPane('pane_EcoMapMeasure').style.zIndex = 100000;
+// Renderer dedicado para garantir que os vetores da trena sejam desenhados neste pane
+var ecomapMeasureRenderer = L.svg({ pane: 'pane_EcoMapMeasure' });
+// Garante que a trena fique sempre ACIMA dos ortomosaicos (panes do qgis2web)
+function ecomapBringMeasureToFront(){
+    try{
+        // pane da trena
+        var p = map.getPane('pane_EcoMapMeasure');
+        if(p) p.style.zIndex = 100000;
+
+        // tooltips/popups acima também
+        var tp = map.getPane('tooltipPane');
+        if(tp) tp.style.zIndex = 110000;
+        var pp = map.getPane('popupPane');
+        if(pp) pp.style.zIndex = 110000;
+
+        // paths já desenhados
+        if(measureLayer && measureLayer.eachLayer){
+            measureLayer.eachLayer(function(lyr){
+                if(lyr && lyr.bringToFront) lyr.bringToFront();
+            });
+        }
+    }catch(e){}
+}
+
+// deixa os cliques passarem para o mapa (a trena não precisa capturar eventos)
+map.getPane('pane_EcoMapMeasure').style.pointerEvents = 'none';
+
+var measureLayer = L.layerGroup().addTo(map);
+        ecomapBringMeasureToFront();
+        var measureTooltip = L.tooltip({
+            permanent:false,
+            direction:'top',
+            offset:[0,-12],
+            className:'ecomap-measure-tooltip',
+            opacity:1
+        });
+
+        function computeTotalDistance(points){
+            var total = 0;
+            for(var i=1;i<points.length;i++){
+                total += map.distance(points[i-1], points[i]);
+            }
+            return total;
+        }
+
+        function clearMeasure(){
+            measurePoints = [];
+            measureLayer.clearLayers();
+            if(measureLine){ map.removeLayer(measureLine); measureLine = null; }
+            if(tempLine){ map.removeLayer(tempLine); tempLine = null; }
+            if(measurePolygon){ map.removeLayer(measurePolygon); measurePolygon = null; }
+            map.closeTooltip(measureTooltip);
+            hideHint();
+        }
+
+        function setMeasure(active){
+            // sempre manter a trena por cima
+            ecomapBringMeasureToFront();
+            measureActive = active;
+
+            // visual state
+            if(measureBtn){
+                if(active) measureBtn.classList.add('is-active');
+                else measureBtn.classList.remove('is-active');
+            }
+
+            if(active){
+                map.getContainer().style.cursor = 'crosshair';
+                map.doubleClickZoom.disable();
+                showHint('<b>EcoMap – Medição</b><br>• Clique para marcar pontos<br>• Duplo-clique para finalizar<br>• Botão 🗑 para limpar<br><span style="opacity:.9">Dica: ESC cancela</span>');
+            }else{
+                map.getContainer().style.cursor = '';
+                map.doubleClickZoom.enable();
+                if(tempLine){ map.removeLayer(tempLine); tempLine = null; }
+                map.closeTooltip(measureTooltip);
+            }
+        }
+
+        // Control: ruler + trash (mesma barra)
+        var measureBtn = null;
+        var MeasureControl = L.Control.extend({
+            options: { position: 'topleft' },
+            onAdd: function(){
+                var container = L.DomUtil.create('div', 'leaflet-bar ecomap-controls');
+                container.classList.add('ecomap-measure');
+
+                var a1 = L.DomUtil.create('a', '', container);
+                a1.href = '#';
+                a1.title = 'Trena (medir distância/área)';
+                a1.innerHTML = '<i class="fas fa-ruler"></i>';
+
+                var a2 = L.DomUtil.create('a', '', container);
+                a2.href = '#';
+                a2.title = 'Limpar medições';
+                a2.innerHTML = '<i class="fas fa-trash-alt"></i>';
+
+                L.DomEvent.disableClickPropagation(container);
+
+                L.DomEvent.on(a1, 'click', function(e){
+                    L.DomEvent.preventDefault(e);
+                    setMeasure(!measureActive);
+                });
+
+                L.DomEvent.on(a2, 'click', function(e){
+                    L.DomEvent.preventDefault(e);
+                    clearMeasure();
+                    if(measureActive){
+                        showHint('<b>EcoMap – Medição</b><br>• Clique para marcar pontos<br>• Duplo-clique para finalizar<br>• Botão 🗑 para limpar<br><span style="opacity:.9">Dica: ESC cancela</span>');
+                    }
+                });
+
+                // expõe para mudar estilo ativo
+                measureBtn = a1;
+                return container;
+            }
+        });
+
+        map.addControl(new MeasureControl());
+
+        // Interações do mapa (trena)
+        function onMapClick(e){
+            if(!measureActive) return;
+
+            var p = e.latlng;
+            measurePoints.push(p);
+
+            // marker do ponto
+            L.circleMarker(p, {
+                pane: 'pane_EcoMapMeasure',
+                renderer: ecomapMeasureRenderer,
+                radius: 5,
+                weight: 2,
+                color: '#111',
+                fillColor: '#fff',
+                fillOpacity: 1
+            }).addTo(measureLayer);
+
+            // Polígono (para área)
+            if(measurePolygon){
+                measurePolygon.addLatLng(p);
+                measurePolygon.setStyle({ color:'#000', weight:3, opacity:1 });
+            }else{
+                measurePolygon = L.polygon([p], { pane: 'pane_EcoMapMeasure', renderer: ecomapMeasureRenderer, color:'#000', weight:3, opacity:1, fillColor:'#111', fillOpacity:0.12 }).addTo(measureLayer);
+            }
+
+            // Linha (para perímetro)
+            if(measureLine){
+                measureLine.addLatLng(p);
+            }else{
+                measureLine = L.polyline([p], { pane: 'pane_EcoMapMeasure', renderer: ecomapMeasureRenderer, color:'#111', weight:3, opacity:0.9 }).addTo(measureLayer);
+            }
+
+            var total = computeTotalDistance(measurePoints);
+            var perimetro = total;
+            var areaTxt = '';
+            if(measurePoints.length >= 3){
+                var area = 0;
+                try{ area = geodesicArea(measurePoints); }catch(err){ area = 0; }
+                areaTxt = '<br><span style="font-weight:700">Área: ' + formatArea(area) + '</span>';
+            }
+            measureTooltip.setLatLng(p).setContent('Perímetro: ' + formatDistance(perimetro) + areaTxt);
+            map.openTooltip(measureTooltip);
+
+            if(tempLine){ map.removeLayer(tempLine); tempLine = null; }
+        }
+
+        function onMapMove(e){
+            if(!measureActive) return;
+            if(measurePoints.length === 0) return;
+
+            var last = measurePoints[measurePoints.length-1];
+            var cur = e.latlng;
+
+            if(!tempLine){
+                tempLine = L.polyline([last, cur], { pane: 'pane_EcoMapMeasure', renderer: ecomapMeasureRenderer, color:'#111', weight:2, opacity:0.45, dashArray:'6,6' }).addTo(measureLayer);
+            }else{
+                tempLine.setLatLngs([last, cur]);
+            }
+
+            var total = computeTotalDistance(measurePoints);
+            var segment = map.distance(last, cur);
+            var perimetro = total + segment;
+
+            var areaTxt = '';
+            if(measurePoints.length >= 2){
+                var area = 0;
+                try{
+                    var pts = measurePoints.concat([cur]);
+                    if(pts.length >= 3){
+                        area = geodesicArea(pts);
+                        areaTxt = '<br><span style="font-weight:700">Área: ' + formatArea(area) + '</span>';
+                    }
+                }catch(err){ area = 0; }
+            }
+
+            measureTooltip
+              .setLatLng(cur)
+              .setContent(
+                'Perímetro: ' + formatDistance(perimetro) +
+                '<br><span style="font-weight:600;opacity:.9">Trecho: ' + formatDistance(segment) + '</span>' +
+                areaTxt
+              );
+            map.openTooltip(measureTooltip);
+        }
+
+        function onMapDblClick(e){
+            if(!measureActive) return;
+            setMeasure(false);
+
+            if(measurePoints.length >= 2){
+                var perimetro = computeTotalDistance(measurePoints);
+                var msg = '<b>Medição finalizada</b><br>Perímetro: ' + formatDistance(perimetro);
+                if(measurePoints.length >= 3){
+                    var area = 0;
+                    try{ area = geodesicArea(measurePoints); }catch(err){ area = 0; }
+                    msg += '<br>Área: ' + formatArea(area);
+                }
+                msg += '<br>Use 🗑 para limpar ou ative a régua para medir novamente.';
+                showHint(msg);
+            }else{
+                hideHint();
+            }
+        }
+
+        function onKeyDown(e){
+            if(!measureActive) return;
+            if(e.key === 'Escape'){
+                clearMeasure();
+                setMeasure(false);
+            }
+        }
+
+        // ===== Eventos da Trena EcoMap (robustos, funcionam mesmo com camadas vetoriais ativas) =====
+// Observação: cliques em vetores (paths) muitas vezes NÃO disparam map.click. Por isso, usamos listeners no DOM do container
+// em modo capture e convertemos para latlng via map.mouseEventToLatLng().
+
+function isFromControl(ev){
+    try{
+        return !!(ev.target && ev.target.closest && ev.target.closest('.leaflet-control, .leaflet-control-container'));
+    }catch(e){ return false; }
+}
+
+function onDomClick(ev){
+    if(!measureActive) return;
+    if(isFromControl(ev)) return;
+
+    // impede popups/handlers das layers quando estiver medindo
+    ev.preventDefault();
+    ev.stopPropagation();
+
+    var latlng = map.mouseEventToLatLng(ev);
+    onMapClick({ latlng: latlng });
+}
+
+function onDomMove(ev){
+    if(!measureActive) return;
+    if(isFromControl(ev)) return;
+
+    var latlng = map.mouseEventToLatLng(ev);
+    onMapMove({ latlng: latlng });
+}
+
+function onDomDblClick(ev){
+    if(!measureActive) return;
+    if(isFromControl(ev)) return;
+
+    ev.preventDefault();
+    ev.stopPropagation();
+
+    var latlng = map.mouseEventToLatLng(ev);
+    onMapDblClick({ latlng: latlng });
+}
+
+var mapContainer = map.getContainer();
+mapContainer.addEventListener('click', onDomClick, true);      // capture=true
+mapContainer.addEventListener('mousemove', onDomMove, true);   // capture=true
+mapContainer.addEventListener('dblclick', onDomDblClick, true);// capture=true
+
+document.addEventListener('keydown', onKeyDown);
+
+// ===== Desativar popups de camadas vetoriais (sempre) =====
+function disableAllVectorPopups(){
+    function killPopupOnLayer(l){
+        if(!l) return;
+        try{
+            if(typeof l.closePopup === 'function') l.closePopup();
+            if(typeof l.unbindPopup === 'function') l.unbindPopup();
+            // remove handler de click (qgis2web usa click para abrir popup)
+            if(typeof l.off === 'function'){
+                try{ l.off('click'); }catch(e){}
+                try{ l.off('popupopen'); }catch(e){}
+            }
+        }catch(e){}
+    }
+
+    try{
+        map.eachLayer(function(lyr){
+            killPopupOnLayer(lyr);
+
+            // sublayers (geojson/feature groups)
+            if(lyr && typeof lyr.eachLayer === 'function'){
+                try{
+                    lyr.eachLayer(function(sl){
+                        killPopupOnLayer(sl);
+                        // alguns geojson tem sub-sub-layers
+                        if(sl && typeof sl.eachLayer === 'function'){
+                            try{ sl.eachLayer(killPopupOnLayer); }catch(e){}
+                        }
+                    });
+                }catch(e){}
+            }
+        });
+    }catch(e){}
+}
+
+// executa agora e também sempre que ligar/desligar overlays (qgis2web pode recriar handlers)
+disableAllVectorPopups();
+map.on('overlayadd', disableAllVectorPopups);
+map.on('overlayremove', disableAllVectorPopups);
+
+// Se algum popup escapar, fecha imediatamente
+map.on('popupopen', function(e){ try{ map.closePopup(e.popup); }catch(err){} });
+
+// Se o usuário ligar/desligar camadas (ex.: ortomosaicos), mantém a trena por cima
+map.on('overlayadd', ecomapBringMeasureToFront);
+map.on('overlayremove', ecomapBringMeasureToFront);
+map.on('layeradd', function(e){
+    // quando entra um imageOverlay novo, reimpõe z-index e traz paths da trena à frente
+    ecomapBringMeasureToFront();
+    disableAllVectorPopups();
+});
+
+        // (Leaflet-measure padrão desativado: substituído por trena EcoMap)
+
+
 
         var bounds_group = new L.featureGroup([]);
         function setBounds() {
@@ -1430,6 +1895,9 @@ var overlaysTree = [
         }
         // roda após renderizar o controle
         setTimeout(setupDocLinks, 0);
+
+        // garante que popups sejam removidos após todas as camadas serem criadas
+        setTimeout(disableAllVectorPopups, 0);
 
         setBounds();
         var i = 0;
