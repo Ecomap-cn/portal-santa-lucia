@@ -13,6 +13,8 @@
         <link rel="stylesheet" href="css/fontawesome-all.min.css">
         <link rel="stylesheet" href="css/leaflet.photon.css">
         <link rel="stylesheet" href="css/leaflet-measure.css">
+        <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css"/>
+
         
 <style>
         html, body, #map {
@@ -198,7 +200,114 @@
             .ecomap-hint{max-width: 88vw;}
         }
 
-        </style>
+        
+
+        /* ===== EcoMap Controls (Anotações) ===== */
+        .ecomap-notes-controls.leaflet-bar a{
+            width:34px; height:34px;
+            line-height:34px;
+            text-align:center;
+            font-size:16px;
+        }
+        .ecomap-notes-controls.leaflet-bar a,
+        .ecomap-notes-controls.leaflet-bar a:hover{
+            background: rgba(255,255,255,0.92);
+            color:#111;
+            border-bottom: 1px solid rgba(0,0,0,0.08);
+        }
+        .ecomap-notes-controls.leaflet-bar a:last-child{
+            border-bottom:none;
+        }
+        .ecomap-notes-controls .is-active{
+            background: #111 !important;
+            color: #fff !important;
+        }
+  
+/* ===== EcoMap Controls: grupos colapsáveis (Trena / Anotações) ===== */
+.ecomap-group .ecomap-sub{ display:none; }
+.ecomap-group.is-open .ecomap-sub{ display:block; }
+
+/* garante centralização dos ícones dentro dos botões */
+.ecomap-controls.leaflet-bar a,
+.ecomap-notes-controls.leaflet-bar a{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+/* ícone principal de anotações (imagem) */
+.ecomap-notes-controls .ecomap-notes-main img{
+  width:18px;
+  height:18px;
+  display:block;
+}
+
+/* ícone polígono (SVG) */
+.ecomap-notes-controls .ecomap-ico-poly svg{
+  width:18px;
+  height:18px;
+  display:block;
+}
+
+
+/* durante desenho (Leaflet.draw), o polígono/linha temporários não podem "capturar" clique.
+   isso permite adicionar vértice mesmo clicando dentro do polígono em criação */
+#map.leaflet-draw-draw-polygon .leaflet-overlay-pane .leaflet-interactive,
+#map.leaflet-draw-draw-polyline .leaflet-overlay-pane .leaflet-interactive{
+  pointer-events: none !important;
+}
+/* EcoMap - Tabela flutuante de anotações */
+  #ecomapNotesTablePanel{
+    position:absolute;
+    right:12px;
+    bottom:88px;
+    z-index:9999;
+    background:rgba(0,0,0,0.72);
+    color:#fff;
+    padding:10px 12px;
+    border-radius:10px;
+    max-width:420px;
+    width: min(420px, calc(100vw - 24px));
+    font-family: Arial, Helvetica, sans-serif;
+    font-size:12px;
+    box-shadow:0 6px 18px rgba(0,0,0,0.35);
+    display:none;
+  }
+  #ecomapNotesTablePanel h4{
+    margin:0 0 8px 0;
+    font-size:12px;
+    font-weight:bold;
+    letter-spacing:0.2px;
+  }
+  #ecomapNotesTablePanel table{
+    width:100%;
+    border-collapse:collapse;
+  }
+  #ecomapNotesTablePanel th, #ecomapNotesTablePanel td{
+    border-bottom:1px solid rgba(255,255,255,0.18);
+    padding:4px 6px;
+    text-align:left;
+    vertical-align:top;
+  }
+  #ecomapNotesTablePanel th{
+    font-weight:bold;
+    opacity:0.95;
+  }
+  #ecomapNotesTablePanel .small{ opacity:0.9; font-size:11px; }
+
+        /* ===== Anotações: reduzir área clicável dos vértices (evita "travamento" perto do 1º ponto em zoom baixo) ===== */
+        .notes-vertex-icon{
+            width: 8px !important;
+            height: 8px !important;
+            margin-left: -4px !important;
+            margin-top: -4px !important;
+            border: 2px solid #fff !important;
+            background: #111 !important;
+            border-radius: 50% !important;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.35);
+        }
+    
+</style>
 
         <title></title>
     </head>
@@ -229,6 +338,8 @@
         <script src="js/labels.js"></script>
         <script src="js/leaflet.photon.js"></script>
         <script src="js/leaflet-measure.js"></script>
+        <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+
         <script src="data/RemanescentedeVegetaoNativa_15.js"></script>
         <script src="data/Audes_16.js"></script>
         <script src="data/Lavoura_17.js"></script>
@@ -487,32 +598,51 @@ var measureLayer = L.layerGroup().addTo(map);
             }
         }
 
-        // Control: ruler + trash (mesma barra)
+        // Control: Trena EcoMap (colapsável: Trena + 🗑)
         var measureBtn = null;
+        var measureGroup = null;
+
+        function setMeasureGroupOpen(open){
+            if(!measureGroup) return;
+            if(open) measureGroup.classList.add('is-open');
+            else measureGroup.classList.remove('is-open');
+        }
+
         var MeasureControl = L.Control.extend({
             options: { position: 'topleft' },
             onAdd: function(){
-                var container = L.DomUtil.create('div', 'leaflet-bar ecomap-controls');
+                var container = L.DomUtil.create('div', 'leaflet-bar ecomap-controls ecomap-group');
                 container.classList.add('ecomap-measure');
+                measureGroup = container;
 
-                var a1 = L.DomUtil.create('a', '', container);
-                a1.href = '#';
-                a1.title = 'Trena (medir distância/área)';
-                a1.innerHTML = '<i class="fas fa-ruler"></i>';
+                // botão principal (Trena)
+                var aMain = L.DomUtil.create('a', '', container);
+                aMain.href = '#';
+                aMain.title = 'Trena (medir distância/área)';
+                aMain.innerHTML = '<i class="fas fa-ruler"></i>';
+                measureBtn = aMain;
 
-                var a2 = L.DomUtil.create('a', '', container);
-                a2.href = '#';
-                a2.title = 'Limpar medições';
-                a2.innerHTML = '<i class="fas fa-trash-alt"></i>';
+                // sub-itens (aparecem quando expandido)
+                var sub = L.DomUtil.create('div', 'ecomap-sub', container);
+                var aTrash = L.DomUtil.create('a', '', sub);
+                aTrash.href = '#';
+                aTrash.title = 'Limpar medições';
+                aTrash.innerHTML = '<i class="fas fa-trash-alt"></i>';
+
+                // inicia COLAPSADO
+                setMeasureGroupOpen(false);
 
                 L.DomEvent.disableClickPropagation(container);
 
-                L.DomEvent.on(a1, 'click', function(e){
+                L.DomEvent.on(aMain, 'click', function(e){
                     L.DomEvent.preventDefault(e);
-                    setMeasure(!measureActive);
+                    // Ao ativar a trena, expande; ao desativar, colapsa
+                    var next = !measureActive;
+                    setMeasure(next);
+                    setMeasureGroupOpen(next);
                 });
 
-                L.DomEvent.on(a2, 'click', function(e){
+                L.DomEvent.on(aTrash, 'click', function(e){
                     L.DomEvent.preventDefault(e);
                     clearMeasure();
                     if(measureActive){
@@ -520,8 +650,6 @@ var measureLayer = L.layerGroup().addTo(map);
                     }
                 });
 
-                // expõe para mudar estilo ativo
-                measureBtn = a1;
                 return container;
             }
         });
@@ -742,6 +870,465 @@ map.on('layeradd', function(e){
 });
 
         // (Leaflet-measure padrão desativado: substituído por trena EcoMap)
+
+
+
+/* ===== Anotações EcoMap (desenhar + exportar GeoJSON) =====
+   - Sem servidor: o cliente desenha e exporta um .geojson para enviar à EcoMap
+   - Observações ficam dentro das propriedades (note, created_at, updated_at)
+*/
+map.createPane('pane_EcoMapNotes');
+map.getPane('pane_EcoMapNotes').style.zIndex = 99990;
+map.getPane('pane_EcoMapNotes').style.pointerEvents = 'auto';
+
+var notesLayer = new L.FeatureGroup([], { pane: 'pane_EcoMapNotes' });
+map.addLayer(notesLayer);
+
+// ===== EcoMap - Controle de interatividade (para desenhar em cima de feições existentes) =====
+var notesDrawActive = false;
+var notesEditActive = false;
+function setNotesPanePointerEvents(enabled){
+  try{
+    var pane = map.getPane('pane_EcoMapNotes');
+    if(pane) pane.style.pointerEvents = enabled ? 'auto' : 'none';
+  }catch(e){}
+}
+
+function setNotesInteractivity(enabled){
+  try{
+    if(!notesLayer || !notesLayer.eachLayer) return;
+    notesLayer.eachLayer(function(l){
+      try {
+        if (l instanceof L.Path){
+          l.options.interactive = enabled;
+          if (l._path) l._path.style.pointerEvents = enabled ? 'auto' : 'none';
+        } else if (l instanceof L.Marker){
+          if (l._icon) l._icon.style.pointerEvents = enabled ? 'auto' : 'none';
+          if (l._shadow) l._shadow.style.pointerEvents = enabled ? 'auto' : 'none';
+        }
+      } catch(e) {}
+    });
+  }catch(e){}
+}
+
+// ===== EcoMap - Tabela flutuante =====
+(function(){
+  var panel = document.createElement('div');
+  panel.id = 'ecomapNotesTablePanel';
+  panel.innerHTML = '<h4>Tabela de Anotações</h4><div class="small">As feições desenhadas aparecem aqui.</div><div id="ecomapNotesTableWrap" style="margin-top:8px; max-height:220px; overflow:auto;"></div>';
+  document.body.appendChild(panel);
+})();
+
+function fmtMeters(m){
+  if (!isFinite(m)) return '-';
+  return (m >= 1000) ? (m/1000).toFixed(2).replace('.',',') + ' km' : m.toFixed(2).replace('.',',') + ' m';
+}
+function fmtArea(a){
+  if (!isFinite(a)) return '-';
+  return (a >= 10000) ? (a/10000).toFixed(3).replace('.',',') + ' ha' : a.toFixed(1).replace('.',',') + ' m²';
+}
+function lineLength(latlngs){
+  var sum = 0;
+  for (var i=1;i<latlngs.length;i++){ sum += map.distance(latlngs[i-1], latlngs[i]); }
+  return sum;
+}
+function polygonPerimeter(latlngs){
+  if (latlngs.length < 2) return 0;
+  var sum = lineLength(latlngs);
+  sum += map.distance(latlngs[latlngs.length-1], latlngs[0]);
+  return sum;
+}
+function polygonArea(latlngs){
+  try {
+    if (L.GeometryUtil && typeof L.GeometryUtil.geodesicArea === 'function'){
+      return Math.abs(L.GeometryUtil.geodesicArea(latlngs));
+    }
+  } catch(e) {}
+  return NaN;
+}
+function refreshNotesTable(){
+  var panel = document.getElementById('ecomapNotesTablePanel');
+  var wrap = document.getElementById('ecomapNotesTableWrap');
+  if (!panel || !wrap) return;
+
+  // se as ferramentas de anotação estiverem recolhidas, a tabela deve ficar oculta
+  if (!notesToolsOpen){
+    panel.style.display = 'none';
+    return;
+  }
+
+  var rows = [];
+  notesLayer.eachLayer(function(l){
+    var type = (l instanceof L.Marker) ? 'Ponto' : (l instanceof L.Polygon && !(l instanceof L.Rectangle) ? 'Polígono' : (l instanceof L.Polyline ? 'Linha' : 'Feição'));
+    var name = (l.feature && l.feature.properties && (l.feature.properties.note || l.feature.properties.name)) ? (l.feature.properties.note || l.feature.properties.name) : '(sem nome)';
+    var metric = '-';
+    if (l instanceof L.Polyline && !(l instanceof L.Polygon)){
+      var ll = l.getLatLngs();
+      metric = fmtMeters(lineLength(ll));
+    } else if (l instanceof L.Polygon){
+      var ring = l.getLatLngs();
+      ring = Array.isArray(ring) && Array.isArray(ring[0]) ? ring[0] : ring;
+      var a = polygonArea(ring);
+      var p = polygonPerimeter(ring);
+      metric = fmtArea(a) + ' | ' + fmtMeters(p);
+    }
+    rows.push({name:name, type:type, metric:metric});
+  });
+
+  if (rows.length === 0){
+    panel.style.display = 'none';
+    wrap.innerHTML = '';
+    return;
+  }
+
+  var html = '<table><thead><tr><th>Nome</th><th>Tipo</th><th>Medições</th></tr></thead><tbody>';
+  rows.forEach(function(r){
+    html += '<tr><td>'+String(r.name).replace(/</g,'&lt;')+'</td><td>'+r.type+'</td><td>'+r.metric+'</td></tr>';
+  });
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+  panel.style.display = 'block';
+}
+
+
+// Estilos (Leaflet.draw usa shapeOptions)
+var notesShapeOptions = {
+    pane: 'pane_EcoMapNotes',
+    color: '#111',
+    weight: 3,
+    opacity: 1,
+    fillColor: '#111',
+    fillOpacity: 0.12
+};
+
+// Opções usadas DURANTE o desenho: tornam o traço temporário não-interativo,
+// evitando que ele “capture” o clique (problema do vértice inside em zoom baixo).
+var notesShapeOptionsDraw = (function(){
+  var o = {};
+  for (var k in notesShapeOptions) o[k] = notesShapeOptions[k];
+  o.interactive = false;
+  return o;
+})();
+
+function setNotesLayerInteractive(layer, interactive){
+  try{
+    layer.options = layer.options || {};
+    layer.options.interactive = !!interactive;
+    if (layer._path){
+      if (interactive){
+        L.DomUtil.addClass(layer._path, 'leaflet-interactive');
+        try{ layer._path.style.pointerEvents = 'auto'; }catch(e){}
+      } else {
+        L.DomUtil.removeClass(layer._path, 'leaflet-interactive');
+        try{ layer._path.style.pointerEvents = 'none'; }catch(e){}
+      }
+    }
+  }catch(e){}
+}
+
+
+function nowISO(){
+    try{ return new Date().toISOString(); }catch(e){ return ''; }
+}
+
+  function bindNoteInteractions(layer){
+    // Tooltip (nome/observação)
+    try {
+      var p = layer && layer.feature && layer.feature.properties ? layer.feature.properties : null;
+      var note = p && (p.note || p.name) ? (p.note || p.name) : '';
+      if (note && layer.bindTooltip){
+        layer.bindTooltip(String(note), {sticky:true, direction:'top', opacity:0.9});
+      }
+    } catch(e) {}
+
+    layer.on('click', function(e){
+      // durante desenho/edição não capturar cliques
+      if (notesDrawActive || notesEditActive) return;
+      // editar nome/observação
+      var current = (layer.feature && layer.feature.properties && (layer.feature.properties.note || layer.feature.properties.name)) || '';
+      var val = prompt('Nome/Observação da feição:', current);
+      if (val === null) return;
+      layer.feature = layer.feature || {type:'Feature', properties:{}};
+      layer.feature.properties = layer.feature.properties || {};
+      layer.feature.properties.note = val;
+      try { if (layer.setTooltipContent) layer.setTooltipContent(String(val)); } catch(e) {}
+      refreshNotesTable();
+    });
+  }
+
+function ensureFeatureMeta(layer){
+    if(!layer.feature) layer.feature = { type:'Feature', properties:{} };
+    if(!layer.feature.properties) layer.feature.properties = {};
+    if(!layer.feature.properties.created_at) layer.feature.properties.created_at = nowISO();
+    if(!layer.feature.properties.updated_at) layer.feature.properties.updated_at = nowISO();
+}
+
+// Handlers (Leaflet.draw)
+var notesVertexIcon = new L.DivIcon({
+    className: 'notes-vertex-icon',
+    iconSize: [8, 8]
+});
+var drawMarker = new L.Draw.Marker(map, { repeatMode:false });
+var drawPolyline = new L.Draw.Polyline(map, { shapeOptions: notesShapeOptionsDraw, repeatMode:false, icon: notesVertexIcon, touchIcon: notesVertexIcon });
+var drawPolygon = new L.Draw.Polygon(map, { shapeOptions: notesShapeOptionsDraw, repeatMode:false, allowIntersection:false, showArea:true, icon: notesVertexIcon, touchIcon: notesVertexIcon });
+
+var editToolbar = new L.EditToolbar.Edit(map, { featureGroup: notesLayer });
+var notesMode = null; // 'marker' | 'polyline' | 'polygon' | 'edit' | null
+
+function stopAllNoteModes(){
+    try{ drawMarker.disable(); }catch(e){}
+    try{ drawPolyline.disable(); }catch(e){}
+    try{ drawPolygon.disable(); }catch(e){}
+    try{ editToolbar.disable(); }catch(e){}
+
+    notesMode = null;
+
+    // estado visual
+    if(notesBtns && notesBtns.length){
+        notesBtns.forEach(function(b){ b.classList.remove('is-active'); });
+    }
+
+    // garante que cliques voltem a funcionar ao sair de qualquer modo
+    try{ setNotesInteractivity(true); }catch(e){}
+    try{ setNotesPanePointerEvents(true); }catch(e){}
+}
+
+function setNotesMode(mode){
+    // se estiver medindo, desliga a trena para não conflitar com cliques
+    try{ if(typeof setMeasure === 'function' && measureActive) setMeasure(false); }catch(e){}
+
+    stopAllNoteModes();
+    notesMode = mode;
+
+    if(mode === 'marker'){ try{ drawMarker.enable(); }catch(e){} }
+    else if(mode === 'polyline'){ try{ drawPolyline.enable(); }catch(e){} }
+    else if(mode === 'polygon'){ try{ drawPolygon.enable(); }catch(e){} }
+    else if(mode === 'edit'){ try{ editToolbar.enable(); }catch(e){} }
+
+    // dica
+    try{
+        if(mode === 'marker') showHint('<b>Anotações</b><br>• Clique para inserir um ponto<br>• Clique no ponto para escrever/editar observação<br>• Exportar para enviar à EcoMap');
+        else if(mode === 'polyline') showHint('<b>Anotações</b><br>• Clique para criar a linha<br>• Duplo-clique para finalizar<br>• Clique na feição para escrever/editar observação');
+        else if(mode === 'polygon') showHint('<b>Anotações</b><br>• Clique para criar o polígono<br>• Duplo-clique para finalizar<br>• Clique na feição para escrever/editar observação');
+        else if(mode === 'edit') showHint('<b>Anotações</b><br>• Arraste vértices para editar<br>• Clique em “Salvar” na barra do editor quando terminar');
+else hideHint();
+    }catch(e){}
+
+    // estado visual
+    if(notesBtnsByMode && notesBtnsByMode[mode]){
+        notesBtnsByMode[mode].classList.add('is-active');
+    }
+}
+
+// eventos Leaflet.draw
+  map.on('draw:drawstart', function(){
+    notesDrawActive = true;
+    // durante desenho, deixar cliques passarem através das feições existentes
+    setNotesInteractivity(false);
+    setNotesPanePointerEvents(false);
+  });
+  map.on('draw:drawstop', function(){
+    notesDrawActive = false;
+    setNotesInteractivity(true);
+    setNotesPanePointerEvents(true);
+  });
+map.on(L.Draw.Event.CREATED, function (e) {
+    try{
+        var layer = e.layer;
+
+        // metadados
+        ensureFeatureMeta(layer);
+
+        // pergunta observação
+        var txt = prompt('Observação:', '');
+        if(txt !== null){
+            layer.feature.properties.note = String(txt || '').trim();
+        }else{
+            layer.feature.properties.note = '';
+        }
+        layer.feature.properties.updated_at = nowISO();
+
+        // estilo extra para marker
+        if(e.layerType === 'marker'){
+            // nada especial; o default marker ok
+        }else{
+            try{ layer.setStyle && layer.setStyle(notesShapeOptions); }catch(err){}
+        }
+
+        setNotesLayerInteractive(layer, true);
+
+        notesLayer.addLayer(layer);
+    refreshNotesTable();
+        bindNoteInteractions(layer);
+    }catch(err){}
+});
+
+map.on('draw:edited', function (e) {
+    try{
+        e.layers.eachLayer(function(layer){
+            ensureFeatureMeta(layer);
+            layer.feature.properties.updated_at = nowISO();
+            bindNoteInteractions(layer);
+        });
+    }catch(err){}
+});
+
+// ===== Exportação GeoJSON =====
+function downloadTextFile(filename, textContent){
+    var blob = new Blob([textContent], {type: 'application/geo+json;charset=utf-8'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 800);
+}
+
+function exportNotesGeoJSON(){
+    try{
+        if(!notesLayer || notesLayer.getLayers().length === 0){
+            alert('Não há anotações para exportar.');
+            return;
+        }
+        var gj = notesLayer.toGeoJSON();
+        // garantia: incluir CRS não é padrão no GeoJSON moderno, então omitimos.
+        var txt = JSON.stringify(gj, null, 2);
+        var fname = 'anotacoes_santa_lucia_' + (new Date().toISOString().slice(0,10)) + '.geojson';
+        downloadTextFile(fname, txt);
+    }catch(e){
+        alert('Falha ao exportar anotações.');
+    }
+}
+
+function clearAllNotes(){
+    if(!notesLayer) return;
+    var ok = confirm('Apagar TODAS as anotações desta sessão?');
+    if(!ok) return;
+    notesLayer.clearLayers();
+    hideHint();
+}
+
+// ===== Controle UI (barra no topo esquerdo) =====
+var notesBtns = [];
+var notesBtnsByMode = {};
+var notesGroup = null;
+
+var notesToolsOpen = false; // controla exibição da tabela flutuante
+function setNotesGroupOpen(open){
+    if(!notesGroup) return;
+    notesToolsOpen = !!open;
+    if(open) notesGroup.classList.add('is-open');
+    else notesGroup.classList.remove('is-open');
+
+    // ao recolher, oculta a tabela flutuante imediatamente
+    var panel = document.getElementById('ecomapNotesTablePanel');
+    if(panel && !notesToolsOpen){
+        panel.style.display = 'none';
+    }
+}
+
+var NotesControl = L.Control.extend({
+    options: { position: 'topleft' },
+    onAdd: function(){
+        var container = L.DomUtil.create('div', 'leaflet-bar ecomap-notes-controls ecomap-group');
+        container.classList.add('ecomap-notes');
+        notesGroup = container;
+
+        // botão principal (imagem da pasta images)
+        var aMain = L.DomUtil.create('a', 'ecomap-notes-main', container);
+        aMain.href = '#';
+        aMain.title = 'Anotações (expandir / recolher)';
+        aMain.innerHTML = '<img src="images/icon-anotacoes.png" alt="Anotações" onerror="this.onerror=null;this.src=\'images/icon-anotacoes.svg\';" />';
+
+        // sub-itens (aparecem quando expandido)
+        var sub = L.DomUtil.create('div', 'ecomap-sub', container);
+
+        function mkBtn(title, iconHtml, onClick){
+            var a = L.DomUtil.create('a', '', sub);
+            a.href = '#';
+            a.title = title;
+            a.innerHTML = iconHtml;
+            L.DomEvent.on(a, 'click', function(ev){
+                L.DomEvent.preventDefault(ev);
+                onClick();
+            });
+            notesBtns.push(a);
+            return a;
+        }
+
+        var bPoly = mkBtn('Anotações: desenhar polígono', `<span class="ecomap-ico-poly" aria-hidden="true">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+  <path d="M7 3 L3 9 L6 21 L18 20 L21 8 L14 3 Z"></path>
+  <circle cx="7" cy="3" r="1.2" fill="currentColor"></circle>
+  <circle cx="3" cy="9" r="1.2" fill="currentColor"></circle>
+  <circle cx="6" cy="21" r="1.2" fill="currentColor"></circle>
+  <circle cx="18" cy="20" r="1.2" fill="currentColor"></circle>
+  <circle cx="21" cy="8" r="1.2" fill="currentColor"></circle>
+  <circle cx="14" cy="3" r="1.2" fill="currentColor"></circle>
+</svg>
+</span>`, function(){
+            setNotesMode(notesMode === 'polygon' ? null : 'polygon');
+        });
+        notesBtnsByMode['polygon'] = bPoly;
+
+        var bLine = mkBtn('Anotações: desenhar linha', '<i class="fas fa-project-diagram"></i>', function(){
+            setNotesMode(notesMode === 'polyline' ? null : 'polyline');
+        });
+        notesBtnsByMode['polyline'] = bLine;
+
+        var bPt = mkBtn('Anotações: inserir ponto', '<i class="fas fa-map-marker-alt"></i>', function(){
+            setNotesMode(notesMode === 'marker' ? null : 'marker');
+        });
+        notesBtnsByMode['marker'] = bPt;
+
+        var bEdit = mkBtn('Anotações: editar geometria', '<i class="fas fa-edit"></i>', function(){
+            setNotesMode(notesMode === 'edit' ? null : 'edit');
+        });
+        notesBtnsByMode['edit'] = bEdit;
+        // NÃO mexer na funcionalidade do botão de download (export)
+        mkBtn('Anotações: exportar GeoJSON', '<i class="fas fa-download"></i>', function(){
+            stopAllNoteModes();
+            exportNotesGeoJSON();
+        });
+
+        mkBtn('Anotações: limpar tudo', '<i class="fas fa-trash-alt"></i>', function(){
+            stopAllNoteModes();
+            clearAllNotes();
+        });
+
+        // inicia COLAPSADO
+        setNotesGroupOpen(false);
+
+        // clique no principal: expandir/recolher
+        L.DomEvent.on(aMain, 'click', function(ev){
+            L.DomEvent.preventDefault(ev);
+            var open = !container.classList.contains('is-open');
+            if(!open){
+                // ao recolher, para qualquer modo ativo (evita ficar "ligado" invisível)
+                try{ stopAllNoteModes(); }catch(e){}
+            }
+            setNotesGroupOpen(open);
+            // ao expandir, reexibe a tabela se houver feições
+            if(open){ try{ refreshNotesTable(); }catch(e){} }
+        });
+
+        L.DomEvent.disableClickPropagation(container);
+        return container;
+    }
+});
+
+map.addControl(new NotesControl());
+
+// Se a trena for ativada, desliga modos de anotação (evita conflito de clique)
+try{
+    var _origSetMeasure = setMeasure;
+    setMeasure = function(active){
+        if(active){ try{ stopAllNoteModes(); }catch(e){} }
+        return _origSetMeasure(active);
+    };
+}catch(e){}
 
 
 
