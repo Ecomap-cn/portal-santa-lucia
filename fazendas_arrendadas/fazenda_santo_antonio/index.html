@@ -1263,6 +1263,25 @@ var drawMarker = new L.Draw.Marker(map, { repeatMode:false });
 var drawPolyline = new L.Draw.Polyline(map, { shapeOptions: notesShapeOptionsDraw, repeatMode:false, icon: notesVertexIcon, touchIcon: notesVertexIcon });
 var drawPolygon = new L.Draw.Polygon(map, { shapeOptions: notesShapeOptionsDraw, repeatMode:false, allowIntersection:false, showArea:true, icon: notesVertexIcon, touchIcon: notesVertexIcon });
 
+// MOBILE FIX (Polyline):
+// On touch devices, Leaflet.draw can treat a quick second tap as a "finish" (marker tap),
+// ending the polyline prematurely. We disable finishing via vertex-marker taps on touch,
+// and rely on the explicit Finalizar/Cancelar UI.
+if (typeof notesIsTouch !== 'undefined' && notesIsTouch) {
+    try {
+        drawPolyline._onMarkerClick = function(e){
+            try{
+                if(e && e.originalEvent){
+                    if(e.originalEvent.preventDefault) e.originalEvent.preventDefault();
+                    if(e.originalEvent.stopPropagation) e.originalEvent.stopPropagation();
+                }
+            }catch(err){}
+            return; // ignore
+        };
+    } catch(err) {}
+}
+
+
 var editToolbar = new L.EditToolbar.Edit(map, { featureGroup: notesLayer });
 var notesMode = null; // 'marker' | 'polyline' | 'polygon' | 'edit' | null
 
