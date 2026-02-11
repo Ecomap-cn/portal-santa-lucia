@@ -308,39 +308,37 @@
         }
     
 
-/* ===== Mobile layout fixes (evitar sobreposições) ===== */
-@media (max-width: 700px){
-  /* remover quadro de dicas/observações no mobile */
-  #ecomapHint{ display:none !important; }
-
-  /* título: menor e não pode passar por baixo do logo */
-  .map-title{
-    left: 8px;
-    bottom: 8px;
-    max-width: calc(100% - 160px);
+  /* ===== EcoMap: Barra Finalizar/Cancelar (mobile + desktop) ===== */
+  #ecomapFinishBar{
+    position:absolute;
+    left:50%;
+    transform:translateX(-50%);
+    bottom:140px;
+    z-index:10000;
+    display:none;
+    gap:10px;
+    align-items:center;
+    justify-content:center;
+    background:rgba(0,0,0,0.72);
+    padding:10px 12px;
+    border-radius:999px;
+    box-shadow:0 6px 18px rgba(0,0,0,0.35);
+    font-family: Arial, Helvetica, sans-serif;
   }
-  .map-title .t1{ font-size: 12px; }
-  .map-title .t2{ font-size: 10px; }
-
-  /* logo: menor e um pouco mais acima para não encostar no título */
-  .map-logo{
-    right: 8px;
-    bottom: 64px;
+  #ecomapFinishBar button{
+    border:0;
+    border-radius:999px;
+    padding:10px 14px;
+    font-weight:700;
+    font-size:14px;
+    cursor:pointer;
   }
-  .map-logo img{
-    width: 120px;
+  #ecomapFinishBar .btn-ok{ background:#ffffff; color:#111; }
+  #ecomapFinishBar .btn-cancel{ background:rgba(255,255,255,0.14); color:#fff; border:1px solid rgba(255,255,255,0.25); }
+  @media (max-width: 768px){
+    #ecomapFinishBar{ bottom:170px; width: calc(100vw - 24px); max-width: 520px; }
+    #ecomapFinishBar button{ flex:1; }
   }
-
-  /* tabela flutuante: subir um pouco para não cobrir título/rodapé */
-  #ecomapNotesTablePanel{
-    right: 10px;
-    bottom: 128px;
-    width: min(420px, calc(100vw - 20px));
-  }
-  #ecomapNotesTableWrap{
-    max-height: 38vh !important;
-  }
-}
 
 </style>
 
@@ -349,6 +347,12 @@
     <body>
         <div id="map">
         </div>
+
+        <div id="ecomapFinishBar" aria-hidden="true">
+          <button type="button" class="btn-ok" id="ecomapBtnFinish">Finalizar</button>
+          <button type="button" class="btn-cancel" id="ecomapBtnCancel">Cancelar</button>
+        </div>
+
         <div class="ecomap-hint" id="ecomapHint"></div>
         <div class="map-title" aria-hidden="true">
             <div class="box">
@@ -1107,6 +1111,77 @@ var drawMarker = new L.Draw.Marker(map, { repeatMode:false });
 var drawPolyline = new L.Draw.Polyline(map, { shapeOptions: notesShapeOptionsDraw, repeatMode:false, icon: notesVertexIcon, touchIcon: notesVertexIcon });
 var drawPolygon = new L.Draw.Polygon(map, { shapeOptions: notesShapeOptionsDraw, repeatMode:false, allowIntersection:false, showArea:true, icon: notesVertexIcon, touchIcon: notesVertexIcon });
 
+// ===== EcoMap: Finalização somente por botão (linha/polígono) - desktop + mobile =====
+var _ecomapFinishBarEl = null;
+var _ecomapPrevDblZoomEnabled = null;
+var _ecomapDblBlocker = function(e){ try{ L.DomEvent.stop(e); }catch(err){} };
+
+function showFinishBar(show){
+  try{
+    if(!_ecomapFinishBarEl) _ecomapFinishBarEl = document.getElementById('ecomapFinishBar');
+    if(!_ecomapFinishBarEl) return;
+    _ecomapFinishBarEl.style.display = show ? 'flex' : 'none';
+    _ecomapFinishBarEl.setAttribute('aria-hidden', show ? 'false' : 'true');
+  }catch(e){}
+}
+
+function _ecomapGetActiveDrawHandler(){
+  try{
+    if(notesMode === 'polyline' && drawPolyline && drawPolyline.enabled && drawPolyline.enabled()) return drawPolyline;
+    if(notesMode === 'polygon' && drawPolygon && drawPolygon.enabled && drawPolygon.enabled()) return drawPolygon;
+  }catch(e){}
+  return null;
+}
+
+(function(){
+  // força Leaflet.draw a não finalizar por duplo-clique
+  try{ if(drawPolyline && drawPolyline.options) drawPolyline.options.finishOnDoubleClick = false; }catch(e){}
+  try{ if(drawPolygon && drawPolygon.options) drawPolygon.options.finishOnDoubleClick = false; }catch(e){}
+
+  function gateFinish(handler){
+    if(!handler || handler.__ecomapFinishGated) return;
+    handler.__ecomapFinishGated = true;
+    var origFinish = handler._finishShape;
+    if(typeof origFinish !== 'function') return;
+
+    handler._finishShape = function(){
+      if(!this._ecomapAllowFinish){
+        return; // bloqueia qualquer finalização por gesto/clique
+      }
+      return origFinish.apply(this, arguments);
+    };
+  }
+
+  gateFinish(drawPolyline);
+  gateFinish(drawPolygon);
+
+  function bindButtons(){
+    var btnFinish = document.getElementById('ecomapBtnFinish');
+    var btnCancel = document.getElementById('ecomapBtnCancel');
+    if(!btnFinish || !btnCancel) return;
+
+    btnFinish.addEventListener('click', function(){
+      var h = _ecomapGetActiveDrawHandler();
+      if(!h) return;
+      try{
+        h._ecomapAllowFinish = true;
+        if(typeof h._finishShape === 'function') h._finishShape();
+      }catch(e){}
+      try{ h._ecomapAllowFinish = false; }catch(e){}
+    });
+
+    btnCancel.addEventListener('click', function(){
+      var h = _ecomapGetActiveDrawHandler();
+      try{ if(h) h.disable(); }catch(e){}
+      try{ stopAllNoteModes && stopAllNoteModes(); }catch(e){}
+      showFinishBar(false);
+    });
+  }
+
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindButtons);
+  else bindButtons();
+})();
+
 var editToolbar = new L.EditToolbar.Edit(map, { featureGroup: notesLayer });
 var notesMode = null; // 'marker' | 'polyline' | 'polygon' | 'edit' | null
 
@@ -1161,11 +1236,23 @@ else hideHint();
     // durante desenho, deixar cliques passarem através das feições existentes
     setNotesInteractivity(false);
     setNotesPanePointerEvents(false);
+
+    // EcoMap: durante desenho (linha/polígono), bloquear duplo-clique e mostrar barra Finalizar/Cancelar (desktop+mobile)
+    try{
+      _ecomapPrevDblZoomEnabled = map.doubleClickZoom && map.doubleClickZoom._enabled;
+      if(map.doubleClickZoom) map.doubleClickZoom.disable();
+    }catch(e){}
+    try{ map.on('dblclick', _ecomapDblBlocker); }catch(e){}
+    try{ showFinishBar(notesMode === 'polyline' || notesMode === 'polygon'); }catch(e){}
   });
   map.on('draw:drawstop', function(){
     notesDrawActive = false;
     setNotesInteractivity(true);
     setNotesPanePointerEvents(true);
+
+    try{ map.off('dblclick', _ecomapDblBlocker); }catch(e){}
+    try{ if(_ecomapPrevDblZoomEnabled) map.doubleClickZoom.enable(); }catch(e){}
+    try{ showFinishBar(false); }catch(e){}
   });
 map.on(L.Draw.Event.CREATED, function (e) {
     try{
