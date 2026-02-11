@@ -295,84 +295,6 @@
   }
   #ecomapNotesTablePanel .small{ opacity:0.9; font-size:11px; }
 
-  /* EcoMap - Botão flutuante para abrir/fechar a tabela (mobile-friendly) */
-  #ecomapNotesTableToggle{
-    position:absolute;
-    right:12px;
-    bottom:88px;
-    z-index:10000;
-    background: rgba(17,17,17,0.92);
-    color:#fff;
-    border: 1px solid rgba(255,255,255,0.18);
-    border-radius: 999px;
-    padding: 8px 10px;
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 12px;
-    font-weight: 700;
-    line-height: 1;
-    display:none;
-    box-shadow:0 6px 18px rgba(0,0,0,0.35);
-    cursor:pointer;
-    user-select:none;
-  }
-  #ecomapNotesTableToggle .count{
-    display:inline-block;
-    min-width:18px;
-    text-align:center;
-    margin-left:6px;
-    padding: 2px 6px;
-    border-radius: 999px;
-    background: rgba(255,255,255,0.16);
-    font-weight: 800;
-  }
-
-  /* Barra de finalizar/cancelar desenho (principalmente para mobile) */
-  #ecomapNotesFinishBar{
-    position:absolute;
-    left:50%;
-    transform: translateX(-50%);
-    bottom: 88px;
-    z-index:10000;
-    display:none;
-    gap:10px;
-    align-items:center;
-    justify-content:center;
-    pointer-events:auto;
-  }
-  #ecomapNotesFinishBar button{
-    border: 1px solid rgba(255,255,255,0.18);
-    background: rgba(17,17,17,0.92);
-    color:#fff;
-    border-radius: 999px;
-    padding: 10px 14px;
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 13px;
-    font-weight: 800;
-    box-shadow:0 6px 18px rgba(0,0,0,0.35);
-  }
-  #ecomapNotesFinishBar button:active{ transform: scale(0.98); }
-
-  /* Ajustes mobile */
-  @media (max-width: 768px){
-    #ecomapNotesTablePanel{
-      right:10px;
-      left:10px;
-      width: auto;
-      max-width: none;
-      bottom: 78px;
-    }
-    #ecomapNotesTableToggle{
-      right:10px;
-      bottom: 78px;
-    }
-    #ecomapNotesTableWrap{
-      max-height: 38vh !important;
-      overflow:auto !important;
-      -webkit-overflow-scrolling: touch;
-    }
-  }
-
-
         /* ===== Anotações: reduzir área clicável dos vértices (evita "travamento" perto do 1º ponto em zoom baixo) ===== */
         .notes-vertex-icon{
             width: 8px !important;
@@ -385,6 +307,41 @@
             box-shadow: 0 1px 2px rgba(0,0,0,0.35);
         }
     
+
+/* ===== Mobile layout fixes (evitar sobreposições) ===== */
+@media (max-width: 700px){
+  /* remover quadro de dicas/observações no mobile */
+  #ecomapHint{ display:none !important; }
+
+  /* título: menor e não pode passar por baixo do logo */
+  .map-title{
+    left: 8px;
+    bottom: 8px;
+    max-width: calc(100% - 160px);
+  }
+  .map-title .t1{ font-size: 12px; }
+  .map-title .t2{ font-size: 10px; }
+
+  /* logo: menor e um pouco mais acima para não encostar no título */
+  .map-logo{
+    right: 8px;
+    bottom: 64px;
+  }
+  .map-logo img{
+    width: 120px;
+  }
+
+  /* tabela flutuante: subir um pouco para não cobrir título/rodapé */
+  #ecomapNotesTablePanel{
+    right: 10px;
+    bottom: 128px;
+    width: min(420px, calc(100vw - 20px));
+  }
+  #ecomapNotesTableWrap{
+    max-height: 38vh !important;
+  }
+}
+
 </style>
 
         <title></title>
@@ -997,102 +954,6 @@ function setNotesInteractivity(enabled){
   document.body.appendChild(panel);
 })();
 
-// ===== EcoMap - Toggle da tabela (não ocupar a tela no mobile) =====
-var notesTableOpen = false;
-var notesIsTouch = (('ontouchstart' in window) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0));
-
-function setNotesTableOpen(open){
-  notesTableOpen = !!open;
-  var panel = document.getElementById('ecomapNotesTablePanel');
-  if(panel){
-    panel.style.display = notesTableOpen ? 'block' : 'none';
-  }
-  // quando fechar a tabela, mantém o botão visível
-  updateNotesTableToggle();
-}
-
-function updateNotesTableToggle(count){
-  var btn = document.getElementById('ecomapNotesTableToggle');
-  var panel = document.getElementById('ecomapNotesTablePanel');
-  if(!btn) return;
-
-  // só aparece se as ferramentas de anotações estiverem abertas e houver feições
-  var hasRows = (typeof count === 'number') ? (count > 0) : (notesLayer && notesLayer.getLayers && notesLayer.getLayers().length > 0);
-  if(!notesToolsOpen || !hasRows){
-    btn.style.display = 'none';
-    if(panel) panel.style.display = 'none';
-    notesTableOpen = false;
-    return;
-  }
-
-  // em desktop pode continuar mostrando a tabela; em touch, começamos recolhido
-  btn.style.display = 'block';
-  if(notesIsTouch){
-    // no touch, tabela só aparece se o usuário abrir
-    if(panel) panel.style.display = notesTableOpen ? 'block' : 'none';
-  } else {
-    // no desktop, mantém comportamento atual (tabela aparecendo)
-    if(panel) panel.style.display = 'block';
-    notesTableOpen = true;
-  }
-}
-
-// cria o botão flutuante
-(function(){
-  var btn = document.createElement('button');
-  btn.id = 'ecomapNotesTableToggle';
-  btn.type = 'button';
-  btn.innerHTML = 'Anotações <span class="count">0</span>';
-  btn.addEventListener('click', function(ev){
-    ev.preventDefault();
-    ev.stopPropagation();
-    setNotesTableOpen(!notesTableOpen);
-  }, true);
-  document.body.appendChild(btn);
-
-  // cria barra de finalizar/cancelar (para evitar "finalizar sem querer" no mobile)
-  var bar = document.createElement('div');
-  bar.id = 'ecomapNotesFinishBar';
-  bar.innerHTML = '<button type="button" id="ecomapNotesFinishOk">✓ Finalizar</button><button type="button" id="ecomapNotesFinishCancel">✕ Cancelar</button>';
-  document.body.appendChild(bar);
-
-  document.getElementById('ecomapNotesFinishOk').addEventListener('click', function(ev){
-    ev.preventDefault(); ev.stopPropagation();
-    try{
-      if(notesMode === 'polyline' && drawPolyline && drawPolyline._enabled && drawPolyline._finishShape){ drawPolyline._finishShape(); }
-      if(notesMode === 'polygon' && drawPolygon && drawPolygon._enabled && drawPolygon._finishShape){ drawPolygon._finishShape(); }
-    }catch(e){}
-  }, true);
-
-  document.getElementById('ecomapNotesFinishCancel').addEventListener('click', function(ev){
-    ev.preventDefault(); ev.stopPropagation();
-    try{ stopAllNoteModes(); }catch(e){}
-  }, true);
-})();
-
-function updateNotesFinishBar(){
-  var bar = document.getElementById('ecomapNotesFinishBar');
-  if(!bar) return;
-
-  // só no touch + quando estiver desenhando linha/polígono
-  var show = !!(notesIsTouch && notesDrawActive && (notesMode === 'polyline' || notesMode === 'polygon'));
-  bar.style.display = show ? 'flex' : 'none';
-}
-
-// impede que um "double tap" gere dblclick e finalize a linha cedo demais no mobile
-(function(){
-  try{
-    var mapContainer = map.getContainer();
-    mapContainer.addEventListener('dblclick', function(ev){
-      if(!notesIsTouch) return;
-      if(!(notesDrawActive && (notesMode === 'polyline' || notesMode === 'polygon'))) return;
-      ev.preventDefault();
-      ev.stopPropagation();
-    }, true);
-  }catch(e){}
-})();
-
-
 function fmtMeters(m){
   if (!isFinite(m)) return '-';
   return (m >= 1000) ? (m/1000).toFixed(2).replace('.',',') + ' km' : m.toFixed(2).replace('.',',') + ' m';
@@ -1123,14 +984,11 @@ function polygonArea(latlngs){
 function refreshNotesTable(){
   var panel = document.getElementById('ecomapNotesTablePanel');
   var wrap = document.getElementById('ecomapNotesTableWrap');
-  var btn = document.getElementById('ecomapNotesTableToggle');
   if (!panel || !wrap) return;
 
-  // se as ferramentas de anotação estiverem recolhidas, oculta tudo
+  // se as ferramentas de anotação estiverem recolhidas, a tabela deve ficar oculta
   if (!notesToolsOpen){
     panel.style.display = 'none';
-    if(btn) btn.style.display = 'none';
-    notesTableOpen = false;
     return;
   }
 
@@ -1154,9 +1012,7 @@ function refreshNotesTable(){
 
   if (rows.length === 0){
     panel.style.display = 'none';
-    if(btn) btn.style.display = 'none';
     wrap.innerHTML = '';
-    notesTableOpen = false;
     return;
   }
 
@@ -1166,19 +1022,7 @@ function refreshNotesTable(){
   });
   html += '</tbody></table>';
   wrap.innerHTML = html;
-
-  // atualiza contador e comportamento (mobile: abre/fecha)
-  if(btn){
-    try{ btn.querySelector('.count').textContent = String(rows.length); }catch(e){}
-  }
-
-  // desktop: mostra sempre; touch: mostra só quando o usuário abrir
-  updateNotesTableToggle(rows.length);
-  if(notesIsTouch){
-    panel.style.display = notesTableOpen ? 'block' : 'none';
-  } else {
-    panel.style.display = 'block';
-  }
+  panel.style.display = 'block';
 }
 
 
@@ -1263,25 +1107,6 @@ var drawMarker = new L.Draw.Marker(map, { repeatMode:false });
 var drawPolyline = new L.Draw.Polyline(map, { shapeOptions: notesShapeOptionsDraw, repeatMode:false, icon: notesVertexIcon, touchIcon: notesVertexIcon });
 var drawPolygon = new L.Draw.Polygon(map, { shapeOptions: notesShapeOptionsDraw, repeatMode:false, allowIntersection:false, showArea:true, icon: notesVertexIcon, touchIcon: notesVertexIcon });
 
-// MOBILE FIX (Polyline):
-// On touch devices, Leaflet.draw can treat a quick second tap as a "finish" (marker tap),
-// ending the polyline prematurely. We disable finishing via vertex-marker taps on touch,
-// and rely on the explicit Finalizar/Cancelar UI.
-if (typeof notesIsTouch !== 'undefined' && notesIsTouch) {
-    try {
-        drawPolyline._onMarkerClick = function(e){
-            try{
-                if(e && e.originalEvent){
-                    if(e.originalEvent.preventDefault) e.originalEvent.preventDefault();
-                    if(e.originalEvent.stopPropagation) e.originalEvent.stopPropagation();
-                }
-            }catch(err){}
-            return; // ignore
-        };
-    } catch(err) {}
-}
-
-
 var editToolbar = new L.EditToolbar.Edit(map, { featureGroup: notesLayer });
 var notesMode = null; // 'marker' | 'polyline' | 'polygon' | 'edit' | null
 
@@ -1301,7 +1126,6 @@ function stopAllNoteModes(){
     // garante que cliques voltem a funcionar ao sair de qualquer modo
     try{ setNotesInteractivity(true); }catch(e){}
     try{ setNotesPanePointerEvents(true); }catch(e){}
-    try{ updateNotesFinishBar(); }catch(e){}
 }
 
 function setNotesMode(mode){
@@ -1337,13 +1161,11 @@ else hideHint();
     // durante desenho, deixar cliques passarem através das feições existentes
     setNotesInteractivity(false);
     setNotesPanePointerEvents(false);
-    try{ updateNotesFinishBar(); }catch(e){}
   });
   map.on('draw:drawstop', function(){
     notesDrawActive = false;
     setNotesInteractivity(true);
     setNotesPanePointerEvents(true);
-    try{ updateNotesFinishBar(); }catch(e){}
   });
 map.on(L.Draw.Event.CREATED, function (e) {
     try{
@@ -1373,7 +1195,6 @@ map.on(L.Draw.Event.CREATED, function (e) {
         notesLayer.addLayer(layer);
     refreshNotesTable();
         bindNoteInteractions(layer);
-        try{ updateNotesFinishBar(); }catch(e){}
     }catch(err){}
 });
 
@@ -1526,7 +1347,6 @@ var NotesControl = L.Control.extend({
             setNotesGroupOpen(open);
             // ao expandir, reexibe a tabela se houver feições
             if(open){ try{ refreshNotesTable(); }catch(e){} }
-            try{ updateNotesTableToggle(); }catch(e){}
         });
 
         L.DomEvent.disableClickPropagation(container);
