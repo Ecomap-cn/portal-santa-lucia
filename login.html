@@ -55,6 +55,55 @@
       outline:none;
     }
     input:focus{border-color:#1f4b70; box-shadow:0 0 0 3px rgba(31,75,112,.12)}
+
+.pass-wrap{
+  position:relative;
+}
+
+.pass-wrap input{
+  padding-right:46px;
+}
+
+.toggle-pass{
+  position:absolute;
+  right:12px;
+  top:50%;
+  transform:translateY(-50%);
+  height:34px;
+  width:34px;
+  border:none;
+  background:transparent;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0;
+}
+
+.toggle-pass svg{
+  width:20px;
+  height:20px;
+  fill:#6b7c8f;
+  transition:fill .2s ease, transform .15s ease;
+}
+
+.toggle-pass:hover svg{
+  fill:#1f4b70;
+}
+
+.toggle-pass:active svg{
+  transform:scale(0.92);
+}
+.remember{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-top:10px;
+  font-size:12px;
+  color:#333;
+  user-select:none;
+}
+.remember input{width:auto}
     .row{display:flex;gap:10px;align-items:center;margin-top:14px}
     button{
       width:100%;
@@ -106,13 +155,25 @@
         <input id="user" name="user" type="text" inputmode="text" placeholder="Digite o login" required />
 
         <label for="pass">Senha</label>
-        <input id="pass" name="pass" type="password" placeholder="Digite a senha" required />
+        <div class="pass-wrap">
+          <input id="pass" name="pass" type="password" placeholder="Digite a senha" required />
+          <button id="togglePass" class="toggle-pass" type="button" aria-label="Mostrar/ocultar senha" title="Mostrar/ocultar senha">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 5c-5.5 0-9.6 4.2-10.9 6 1.3 1.8 5.4 6 10.9 6s9.6-4.2 10.9-6C21.6 9.2 17.5 5 12 5zm0 10a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm0-6.5A2.5 2.5 0 1 0 12 13a2.5 2.5 0 0 0 0-5z"/>
+            </svg>
+          </button>
+        </div>
+
+<div class="remember">
+  <input id="remember" type="checkbox" />
+  <label for="remember">Lembrar senha neste dispositivo</label>
+</div>
 
         <div class="row">
           <button type="submit">Acessar</button>
         </div>
         <div id="msg" class="msg"></div>
-        <div class="hint">Obs.: por segurança, o acesso expira diariamente às <b>23:59</b>.</div>
+        <div class="hint">Obs.: por segurança, o acesso expira diariamente às <b>23:59:59</b>.</div>
       </form>
     </div>
   </main>
@@ -126,13 +187,17 @@
   const KEY_AUTH = "SL_AUTH";
   const KEY_EXP  = "SL_EXPIRY";
 
+  const KEY_REMEMBER = "SL_REMEMBER";
+  const KEY_USER = "SL_USER";
+  const KEY_PASS = "SL_PASS";
+
   function endOfDayExpiry(){
     const now = new Date();
     const exp = new Date(now);
-    exp.setHours(23,59,0,0); // 23:59:00
+    exp.setHours(23,59,59,999); // 23:59:59
     if(exp.getTime() <= now.getTime()){
       exp.setDate(exp.getDate()+1);
-      exp.setHours(23,59,0,0);
+      exp.setHours(23,59,59,999);
     }
     return exp.getTime();
   }
@@ -148,7 +213,10 @@
   // Se já estiver logado e válido, manda direto
   (function autoBypass(){
     let ok=false, exp=0;
-    try{ ok = sessionStorage.getItem(KEY_AUTH)==="1"; exp = parseInt(sessionStorage.getItem(KEY_EXP)||"0",10);}catch(e){}
+    try{
+      ok = sessionStorage.getItem(KEY_AUTH)==="1";
+      exp = parseInt(sessionStorage.getItem(KEY_EXP)||"0",10);
+    }catch(e){}
     if(ok && exp && Date.now() < exp){
       location.replace(getNext());
     }
@@ -156,6 +224,36 @@
 
   const form = document.getElementById("loginForm");
   const msg  = document.getElementById("msg");
+
+
+const remember = document.getElementById("remember");
+const passEl = document.getElementById("pass");
+const userEl = document.getElementById("user");
+
+// Preenche login/senha se "lembrar" estiver ativo (apenas neste dispositivo/navegador)
+(function prefillRemembered(){
+  try{
+    const r = localStorage.getItem(KEY_REMEMBER) === "1";
+    if(r){
+      remember.checked = true;
+      const lu = localStorage.getItem(KEY_USER) || "";
+      const lp = localStorage.getItem(KEY_PASS) || "";
+      if(lu) userEl.value = lu;
+      if(lp) passEl.value = lp;
+    }
+  }catch(e){}
+})();
+
+// Olhinho: mostrar/ocultar senha
+(function bindTogglePass(){
+  const btn = document.getElementById("togglePass");
+  if(!btn) return;
+  btn.addEventListener("click", function(){
+    const isPwd = passEl.type === "password";
+    passEl.type = isPwd ? "text" : "password";
+    btn.setAttribute("aria-pressed", isPwd ? "true" : "false");
+  });
+})();
 
   form.addEventListener("submit", function(e){
     e.preventDefault();
@@ -169,6 +267,18 @@
         sessionStorage.setItem(KEY_AUTH, "1");
         sessionStorage.setItem(KEY_EXP, String(endOfDayExpiry()));
       }catch(err){}
+      // Salvar/limpar credenciais conforme opção "lembrar"
+      try{
+        if(remember && remember.checked){
+          localStorage.setItem(KEY_REMEMBER, "1");
+          localStorage.setItem(KEY_USER, u);
+          localStorage.setItem(KEY_PASS, p);
+        }else{
+          localStorage.removeItem(KEY_REMEMBER);
+          localStorage.removeItem(KEY_USER);
+          localStorage.removeItem(KEY_PASS);
+        }
+      }catch(e){}
       location.replace(getNext());
       return;
     }
@@ -176,8 +286,13 @@
     msg.textContent = "Login ou senha inválidos.";
   });
 
-  // UX: foco no login
+
+// UX: foco no campo correto
+if((document.getElementById("user").value || "").trim() && !(document.getElementById("pass").value || "")){
+  document.getElementById("pass").focus();
+}else{
   document.getElementById("user").focus();
+}
 })();
 </script>
 </body>
