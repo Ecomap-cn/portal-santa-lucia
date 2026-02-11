@@ -787,7 +787,7 @@ var measureLayer = L.layerGroup().addTo(map);
                 try{ area = geodesicArea(measurePoints); }catch(err){ area = 0; }
                 areaTxt = '<br><span style="font-weight:700">Área: ' + formatArea(area) + '</span>';
             }
-            measureTooltip.setLatLng(p).setContent('Perímetro: ' + formatDistance(perimetro) + areaTxt);
+            measureTooltip.setLatLng(p).setContent('Distância Total: ' + formatDistance(perimetro) + areaTxt);
             map.openTooltip(measureTooltip);
 
             if(tempLine){ map.removeLayer(tempLine); tempLine = null; }
@@ -825,7 +825,7 @@ var measureLayer = L.layerGroup().addTo(map);
             measureTooltip
               .setLatLng(cur)
               .setContent(
-                'Perímetro: ' + formatDistance(perimetro) +
+                'Distância Total: ' + formatDistance(perimetro) +
                 '<br><span style="font-weight:600;opacity:.9">Trecho: ' + formatDistance(segment) + '</span>' +
                 areaTxt
               );
@@ -838,7 +838,7 @@ var measureLayer = L.layerGroup().addTo(map);
 
             if(measurePoints.length >= 2){
                 var perimetro = computeTotalDistance(measurePoints);
-                var msg = '<b>Medição finalizada</b><br>Perímetro: ' + formatDistance(perimetro);
+                var msg = '<b>Medição finalizada</b><br>Distância Total: ' + formatDistance(perimetro);
                 if(measurePoints.length >= 3){
                     var area = 0;
                     try{ area = geodesicArea(measurePoints); }catch(err){ area = 0; }
