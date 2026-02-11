@@ -44,18 +44,18 @@
             background: rgba(255,255,255,0.92);
             border: 1px solid rgba(0,0,0,0.22);
             border-radius: 10px;
-            padding: 6px 10px;
+            padding: 5px 8px;
             box-shadow: 0 1px 4px rgba(0,0,0,0.20);
         }
         .map-title .t1{
             font-weight: 800;
-            font-size: 13px;
+            font-size: 12px;
             line-height: 1.15;
             margin: 0;
         }
         .map-title .t2{
             font-weight: 600;
-            font-size: 11px;
+            font-size: 10px;
             line-height: 1.15;
             margin-top: 2px;
             opacity: .9;
@@ -295,6 +295,13 @@
   }
   #ecomapNotesTablePanel .small{ opacity:0.9; font-size:11px; }
 
+  /* EcoMap - Botão da tabela (somente mobile; aparece quando houver feições) */
+  .ecomap-notes-tablebtn{ display:none; }
+  @media (max-width: 768px){
+    .ecomap-notes-tablebtn{ display:block; }
+  }
+
+
         /* ===== Anotações: reduzir área clicável dos vértices (evita "travamento" perto do 1º ponto em zoom baixo) ===== */
         .notes-vertex-icon{
             width: 8px !important;
@@ -313,7 +320,7 @@
     position:absolute;
     left:50%;
     transform:translateX(-50%);
-    bottom:140px;
+    bottom: 95px;
     z-index:10000;
     display:none;
     gap:10px;
@@ -336,7 +343,7 @@
   #ecomapFinishBar .btn-ok{ background:#ffffff; color:#111; }
   #ecomapFinishBar .btn-cancel{ background:rgba(255,255,255,0.14); color:#fff; border:1px solid rgba(255,255,255,0.25); }
   @media (max-width: 768px){
-    #ecomapFinishBar{ bottom:170px; width: calc(100vw - 24px); max-width: 520px; }
+    #ecomapFinishBar{ bottom: 120px; width: calc(100vw - 24px); max-width: 520px; }
     #ecomapFinishBar button{ flex:1; }
   }
 
@@ -352,11 +359,9 @@
           <button type="button" class="btn-ok" id="ecomapBtnFinish">Finalizar</button>
           <button type="button" class="btn-cancel" id="ecomapBtnCancel">Cancelar</button>
         </div>
-
-        <div class="ecomap-hint" id="ecomapHint"></div>
-        <div class="map-title" aria-hidden="true">
+<div class="map-title" aria-hidden="true">
             <div class="box">
-                <div class="t1">Fazenda Santo Antônio - Santa Lúcia Madeiras</div>
+                <div class="t1">Fazenda Santo Antônio</div>
                 <div class="t2">Voo 01: Jan/2026</div>
             </div>
         </div>
@@ -985,12 +990,23 @@ function polygonArea(latlngs){
   } catch(e) {}
   return NaN;
 }
+
+// ===== EcoMap: controle de exibição da tabela (mobile) =====
+var notesTableVisible = !window.matchMedia('(max-width: 768px)').matches; // desktop: aberta; mobile: recolhida por padrão
+function toggleNotesTableVisible(){
+  notesTableVisible = !notesTableVisible;
+  try{ refreshNotesTable(); }catch(e){}
+}
+
 function refreshNotesTable(){
   var panel = document.getElementById('ecomapNotesTablePanel');
   var wrap = document.getElementById('ecomapNotesTableWrap');
   if (!panel || !wrap) return;
 
-  // se as ferramentas de anotação estiverem recolhidas, a tabela deve ficar oculta
+  
+  var tableBtn = window._ecomapNotesTableBtn || null;
+  if (tableBtn){ tableBtn.style.display = 'none'; }
+// se as ferramentas de anotação estiverem recolhidas, a tabela deve ficar oculta
   if (!notesToolsOpen){
     panel.style.display = 'none';
     return;
@@ -1017,6 +1033,16 @@ function refreshNotesTable(){
   if (rows.length === 0){
     panel.style.display = 'none';
     wrap.innerHTML = '';
+    if (tableBtn){ tableBtn.style.display = 'none'; }
+    return;
+  }
+
+  // há feições: habilita botão da tabela (no mobile)
+  if (tableBtn){ tableBtn.style.display = ''; }
+
+  // no mobile, respeitar o estado recolhida/aberta
+  if (window.matchMedia('(max-width: 768px)').matches && !notesTableVisible){
+    panel.style.display = 'none';
     return;
   }
 
@@ -1419,6 +1445,14 @@ var NotesControl = L.Control.extend({
             stopAllNoteModes();
             clearAllNotes();
         });
+
+
+        // Botão da Tabela (somente mobile; aparece quando houver feições)
+        var bTable = mkBtn('Tabela de anotações (mostrar/ocultar)', '<i class="fas fa-table"></i>', function(){
+            toggleNotesTableVisible();
+        });
+        bTable.classList.add('ecomap-notes-tablebtn');
+        window._ecomapNotesTableBtn = bTable;
 
         // inicia COLAPSADO
         setNotesGroupOpen(false);
