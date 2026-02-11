@@ -279,7 +279,8 @@
   #ecomapNotesTablePanel table{
     width:100%;
     border-collapse:collapse;
-    table-layout:fixed;
+    table-layout:auto;          /* permite a coluna de medições crescer */
+    min-width: 620px;           /* força scroll horizontal no mobile quando necessário */
   }
   #ecomapNotesTablePanel th:nth-child(1), #ecomapNotesTablePanel td:nth-child(1){ width:38%; }
   #ecomapNotesTablePanel th:nth-child(2), #ecomapNotesTablePanel td:nth-child(2){ width:18%; }
@@ -287,15 +288,25 @@
 
   #ecomapNotesTablePanel th, #ecomapNotesTablePanel td{
     white-space:nowrap;
+  }
+  /* mantém elipse só nas colunas curtas */
+  #ecomapNotesTablePanel th:nth-child(1), #ecomapNotesTablePanel td:nth-child(1),
+  #ecomapNotesTablePanel th:nth-child(2), #ecomapNotesTablePanel td:nth-child(2){
     overflow:hidden;
     text-overflow:ellipsis;
+  }
+  /* coluna de medições: mostra completo (com rolagem horizontal) */
+  #ecomapNotesTablePanel th:nth-child(3), #ecomapNotesTablePanel td:nth-child(3){
+    overflow:visible;
+    text-overflow:clip;
   }
 
   /* rolagem vertical e limite de altura (para não subir demais) */
   #ecomapNotesTableWrap{
     max-height:160px;
-    overflow:auto;
-    overflow-x:hidden;
+    overflow-y:auto;
+    overflow-x:auto;            /* rolagem horizontal para coordenadas */
+    -webkit-overflow-scrolling: touch;
   }
 
   @media (max-width: 768px){
