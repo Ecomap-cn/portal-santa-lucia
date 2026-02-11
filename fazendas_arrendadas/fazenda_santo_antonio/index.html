@@ -259,20 +259,55 @@
 /* EcoMap - Tabela flutuante de anotações */
   #ecomapNotesTablePanel{
     position:absolute;
-    right:12px;
-    bottom:88px;
+    /* mantém a tabela sempre à direita da coluna de botões (evita sobreposição) */
+    left: 54px;
+    right: 10px;
+    bottom: 56px;
     z-index:9999;
     background:rgba(0,0,0,0.72);
     color:#fff;
-    padding:10px 12px;
+    padding:8px 10px;
     border-radius:10px;
-    max-width:420px;
-    width: min(420px, calc(100vw - 24px));
+    width:auto;
+    max-width:520px; /* evita ficar exagerada em telas maiores */
     font-family: Arial, Helvetica, sans-serif;
     font-size:12px;
     box-shadow:0 6px 18px rgba(0,0,0,0.35);
     display:none;
   }
+  /* tabela mais “enxuta” (sem espaço vazio à direita) */
+  #ecomapNotesTablePanel table{
+    width:100%;
+    border-collapse:collapse;
+    table-layout:fixed;
+  }
+  #ecomapNotesTablePanel th:nth-child(1), #ecomapNotesTablePanel td:nth-child(1){ width:38%; }
+  #ecomapNotesTablePanel th:nth-child(2), #ecomapNotesTablePanel td:nth-child(2){ width:18%; }
+  #ecomapNotesTablePanel th:nth-child(3), #ecomapNotesTablePanel td:nth-child(3){ width:44%; }
+
+  #ecomapNotesTablePanel th, #ecomapNotesTablePanel td{
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  /* rolagem vertical e limite de altura (para não subir demais) */
+  #ecomapNotesTableWrap{
+    max-height:160px;
+    overflow:auto;
+    overflow-x:hidden;
+  }
+
+  @media (max-width: 768px){
+    #ecomapNotesTablePanel{
+      left: 52px;
+      right: 8px;
+      bottom: 52px;
+      max-width:none; /* usa o right/left como limite */
+    }
+    #ecomapNotesTableWrap{ max-height:140px; }
+  }
+
   #ecomapNotesTablePanel h4{
     margin:0 0 8px 0;
     font-size:12px;
@@ -296,7 +331,7 @@
   #ecomapNotesTablePanel .small{ opacity:0.9; font-size:11px; }
 
   /* EcoMap - Botão da tabela (somente mobile; aparece quando houver feições) */
-  .ecomap-notes-tablebtn{ display:none; }
+  .ecomap-notes-tablebtn{ display:block; }
   @media (max-width: 768px){
     .ecomap-notes-tablebtn{ display:block; }
   }
@@ -959,7 +994,7 @@ function setNotesInteractivity(enabled){
 (function(){
   var panel = document.createElement('div');
   panel.id = 'ecomapNotesTablePanel';
-  panel.innerHTML = '<h4>Tabela de Anotações</h4><div class="small">As feições desenhadas aparecem aqui.</div><div id="ecomapNotesTableWrap" style="margin-top:8px; max-height:220px; overflow:auto;"></div>';
+  panel.innerHTML = '<h4>Tabela de Anotações</h4><div class="small">As feições desenhadas aparecem aqui.</div><div id="ecomapNotesTableWrap" style="margin-top:8px;"></div>';
   document.body.appendChild(panel);
 })();
 
@@ -969,7 +1004,7 @@ function fmtMeters(m){
 }
 function fmtArea(a){
   if (!isFinite(a)) return '-';
-  return (a >= 10000) ? (a/10000).toFixed(3).replace('.',',') + ' ha' : a.toFixed(1).replace('.',',') + ' m²';
+  return (a/10000).toFixed(4).replace('.',',') + ' ha';
 }
 function lineLength(latlngs){
   var sum = 0;
@@ -998,6 +1033,25 @@ function toggleNotesTableVisible(){
   try{ refreshNotesTable(); }catch(e){}
 }
 
+
+function toDMS(deg, isLat){
+  // Converte graus decimais para DMS, sem casas decimais nos segundos
+  var hemi = isLat ? (deg < 0 ? 'S' : 'N') : (deg < 0 ? 'W' : 'E');
+  var abs = Math.abs(deg);
+  var d = Math.floor(abs);
+  var minFloat = (abs - d) * 60;
+  var m = Math.floor(minFloat);
+  var secFloat = (minFloat - m) * 60;
+  var s = Math.round(secFloat);
+
+  // normaliza arredondamentos (ex.: 59.9 -> 60)
+  if(s === 60){ s = 0; m += 1; }
+  if(m === 60){ m = 0; d += 1; }
+
+  return d + '°' + String(m).padStart(2,'0') + "'" + String(s).padStart(2,'0') + '"' + hemi;
+}
+
+
 function refreshNotesTable(){
   var panel = document.getElementById('ecomapNotesTablePanel');
   var wrap = document.getElementById('ecomapNotesTableWrap');
@@ -1017,6 +1071,12 @@ function refreshNotesTable(){
     var type = (l instanceof L.Marker) ? 'Ponto' : (l instanceof L.Polygon && !(l instanceof L.Rectangle) ? 'Polígono' : (l instanceof L.Polyline ? 'Linha' : 'Feição'));
     var name = (l.feature && l.feature.properties && (l.feature.properties.note || l.feature.properties.name)) ? (l.feature.properties.note || l.feature.properties.name) : '(sem nome)';
     var metric = '-';
+    if (l instanceof L.Marker){
+      var pt = l.getLatLng ? l.getLatLng() : null;
+      if(pt){
+        metric = 'Lat: ' + toDMS(pt.lat, true) + ' | Lon: ' + toDMS(pt.lng, false);
+      }
+    }
     if (l instanceof L.Polyline && !(l instanceof L.Polygon)){
       var ll = l.getLatLngs();
       metric = fmtMeters(lineLength(ll));
@@ -1040,8 +1100,8 @@ function refreshNotesTable(){
   // há feições: habilita botão da tabela (no mobile)
   if (tableBtn){ tableBtn.style.display = ''; }
 
-  // no mobile, respeitar o estado recolhida/aberta
-  if (window.matchMedia('(max-width: 768px)').matches && !notesTableVisible){
+  // respeitar o estado recolhida/aberta (desktop + mobile)
+  if (!notesTableVisible){
     panel.style.display = 'none';
     return;
   }
