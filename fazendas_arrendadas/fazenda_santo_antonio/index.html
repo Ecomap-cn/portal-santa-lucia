@@ -2546,6 +2546,7 @@ try{
         var doc_itr_39525_39526 = createDocLayer('docs/itr/ITR_39.525_39.526.pdf');
         var doc_itr_39527_39528 = createDocLayer('docs/itr/ITR_39.527_39.528.pdf');
         var doc_uso_do_solo = createDocLayer('uso_do_solo.html');
+        var doc_mapa_uso_solo_santo_antonio = createDocLayer('docs/mapas/Uso_do_solo_Santo_Antonio.pdf');
 
         // Abre PDF em nova aba ao clicar no item e desmarca automaticamente
 var overlaysTree = [
@@ -2631,6 +2632,9 @@ var overlaysTree = [
                 {label: "<a class=\"doc-link\" href=\"docs/itr/ITR_39.022.pdf\" target=\"_blank\" rel=\"noopener\">ITR 39.022</a>", layer: doc_itr_39022},
                 {label: "<a class=\"doc-link\" href=\"docs/itr/ITR_39.525_39.526.pdf\" target=\"_blank\" rel=\"noopener\">ITR 39.525 + 39.526</a>", layer: doc_itr_39525_39526},
                 {label: "<a class=\"doc-link\" href=\"docs/itr/ITR_39.527_39.528.pdf\" target=\"_blank\" rel=\"noopener\">ITR 39.527 + 39.528</a>", layer: doc_itr_39527_39528}
+            ]},
+            {label: '<b>Mapas para Download</b>', collapsed: true, selectAllCheckbox: false, children: [
+                {label: "<a class=\"doc-link\" href=\"docs/mapas/Uso_do_solo_Santo_Antonio.pdf\" target=\"_blank\" rel=\"noopener\">Uso do Solo - Santo Antônio</a>", layer: doc_mapa_uso_solo_santo_antonio}
             ]}
         ]},
         {label: "<a class=\"doc-link\" href=\"uso_do_solo.html\" target=\"_blank\" rel=\"noopener\">Tabela de Uso do Solo - Áreas</a>", layer: doc_uso_do_solo}
