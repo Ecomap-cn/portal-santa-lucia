@@ -87,15 +87,18 @@
     }
 
     .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      display: flex;
+      flex-wrap: wrap;
       gap: 16px;
       margin-top: 16px;
+      align-items: stretch;
     }
 
     .card-link {
       text-decoration: none;
       color: inherit;
+      width: 260px;
+      max-width: 100%;
     }
 
     .card {
@@ -262,32 +265,10 @@
       </a>
     </section>
 
-    <!-- Áreas Arrendadas -->
-    <section class="intro section-header">
-      <h2>Áreas arrendadas</h2>
-      <p>Propriedades operadas sob arrendamento.</p>
-    </section>
-
-    <section class="grid">
-      <a class="card-link"
-         href="fazendas_arrendadas/fazenda_santo_antonio/index.html"
-         target="_blank">
-        <article class="card card-active">
-          <div>
-            <div class="card-title">Fazenda Santo Antônio</div>
-            <div class="card-subtitle">Área arrendada</div>
-          </div>
-          <div class="card-meta">
-            Mapa interativo, uso do solo, ortomosaico e documentação fundiária.
-          </div>
-        </article>
-      </a>
-    </section>
-
     <!-- Áreas Próprias -->
     <section class="intro section-header">
       <h2>Áreas próprias</h2>
-      <p>Propriedades próprias do cliente.</p>
+      <p>Mapa interativo, uso do solo, hidrografia, projetos de plantio, ortomosaico e documentação fundiária.</p>
     </section>
 
     <section class="grid">
@@ -298,47 +279,34 @@
             <div class="card-title">Fazenda Aparecidinha</div>
             <div class="card-subtitle">Área própria</div>
           </div>
-          <div class="card-meta">
-            Mapa interativo, uso do solo, hidrografia, projetos de plantio, ortomosaico e documentação fundiária.
-          </div>
         </article>
       </a>
 
-      <!-- Propriedade 3 -->
-      <a class="card-link" href="#" target="_blank">
-        <article class="card card-pending">
+      <!-- Fazenda Madekin -->
+      <a class="card-link" href="fazendas_proprias/fazenda_madekin/index.html" target="_blank">
+        <article class="card card-active">
           <div>
-            <div class="card-title">Propriedade 03</div>
-            <div class="card-subtitle">Em breve: link para o mapa</div>
-          </div>
-          <div class="card-meta">
-            Identificação de áreas de APP, regeneração e uso atual do solo.
+            <div class="card-title">Fazenda Madekin</div>
+            <div class="card-subtitle">Área própria</div>
           </div>
         </article>
       </a>
+    </section>
 
-      <!-- Propriedade 4 -->
-      <a class="card-link" href="#" target="_blank">
-        <article class="card card-pending">
-          <div>
-            <div class="card-title">Propriedade 04</div>
-            <div class="card-subtitle">Em breve: link para o mapa</div>
-          </div>
-          <div class="card-meta">
-            Mapa de uso do solo e classificação das áreas produtivas.
-          </div>
-        </article>
-      </a>
+    <!-- Áreas Arrendadas -->
+    <section class="intro section-header">
+      <h2>Áreas arrendadas</h2>
+      <p>Mapa interativo, uso do solo, hidrografia, projetos de plantio, ortomosaico e documentação fundiária.</p>
+    </section>
 
-      <!-- Propriedade 5 -->
-      <a class="card-link" href="#" target="_blank">
-        <article class="card card-pending">
+    <section class="grid">
+      <a class="card-link"
+         href="fazendas_arrendadas/fazenda_santo_antonio/index.html"
+         target="_blank">
+        <article class="card card-active">
           <div>
-            <div class="card-title">Propriedade 05</div>
-            <div class="card-subtitle">Em breve: link para o mapa</div>
-          </div>
-          <div class="card-meta">
-            Inventário de Pinus, áreas passíveis de exploração e restrições.
+            <div class="card-title">Fazenda Santo Antônio</div>
+            <div class="card-subtitle">Área arrendada</div>
           </div>
         </article>
       </a>
