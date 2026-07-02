@@ -1,10 +1,11 @@
 <!DOCTYPE html>
+
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <title>Portal Santa Lúcia – Mapas Interativos</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
+<meta charset="utf-8"/>
+<title>Portal Santa Lúcia – Mapas Interativos</title>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<style>
     * {
       box-sizing: border-box;
       margin: 0;
@@ -182,8 +183,7 @@
       }
     }
   </style>
-
-  <script>
+<script>
   (function(){
     const KEY_AUTH = "SL_AUTH";
     const KEY_EXP = "SL_EXPIRY";
@@ -214,116 +214,102 @@
     });
   })();
   </script>
-
 </head>
 <body>
-  <header>
-    <div class="brand">
-      <div class="brand-logo">
-        <!-- Logotipo do cliente -->
-        <img src="images/logo-site-final-2.png" alt="Santa Lúcia">
-      </div>
-      <div class="brand-text">
-        <h1>Portal Santa Lúcia – Mapas Interativos</h1>
-        <p>Uso do solo, áreas de Pinus, inventário e análises espaciais.</p>
-      </div>
-    </div>
-  
-    <div class="logout-wrap">
-      <button id="btnLogout" type="button" class="logout-btn" title="Sair">Sair</button>
-    </div>
-  </header>
-
-  <main>
-    <section class="intro">
-      <h2>Selecione a propriedade</h2>
-      <p>
+<header>
+<div class="brand">
+<div class="brand-logo">
+<!-- Logotipo do cliente -->
+<img alt="Santa Lúcia" src="images/logo-site-final-2.png"/>
+</div>
+<div class="brand-text">
+<h1>Portal Santa Lúcia – Mapas Interativos</h1>
+<p>Uso do solo, áreas de Pinus, inventário e análises espaciais.</p>
+</div>
+</div>
+<div class="logout-wrap">
+<button class="logout-btn" id="btnLogout" title="Sair" type="button">Sair</button>
+</div>
+</header>
+<main>
+<section class="intro">
+<h2>Selecione a propriedade</h2>
+<p>
         Clique em uma das propriedades abaixo para acessar o mapa interativo.
         Conforme os projetos forem concluídos, cada botão será associado ao
         respectivo mapa detalhado.
       </p>
-    </section>
-
-
-    <!-- Resumo Geral -->
-    <section class="intro section-header">
-      <h2>Resumo geral</h2>
-      <p>Consolidado de áreas plantadas por fazenda e por ano de plantio.</p>
-    </section>
-
-    <section class="grid">
-      <a class="card-link" href="resumo.html" target="_blank">
-        <article class="card card-active">
-          <div>
-            <div class="card-title">Resumo Geral – Áreas Plantadas</div>
-            <div class="card-subtitle">Tabela consolidada (Fazenda × Ano)</div>
-          </div>
-          <div class="card-meta">
+</section>
+<!-- Resumo Geral -->
+<section class="intro section-header">
+<h2>Resumo geral</h2>
+<p>Consolidado de áreas plantadas por fazenda e por ano de plantio.</p>
+</section>
+<section class="grid">
+<a class="card-link" href="resumo.html" target="_blank">
+<article class="card card-active">
+<div>
+<div class="card-title">Resumo Geral – Áreas Plantadas</div>
+<div class="card-subtitle">Tabela consolidada (Fazenda × Ano)</div>
+</div>
+<div class="card-meta">
             Visualize o total de hectares plantados por fazenda e por ano de plantio.
           </div>
-        </article>
-      </a>
-    </section>
+</article>
+</a>
+</section>
+<!-- Áreas Próprias -->
+<section class="intro section-header">
+<h2>Áreas próprias</h2>
+<p>Mapa interativo, uso do solo, hidrografia, projetos de plantio, ortomosaico e documentação fundiária.</p>
+</section>
+<section class="grid">
+<!-- Fazenda Aparecidinha -->
+<a class="card-link" href="fazendas_proprias/fazenda_aparecidinha/index.html" target="_blank">
+<article class="card card-active">
+<div>
+<div class="card-title">Fazenda Aparecidinha</div>
+<div class="card-subtitle">Área própria</div>
+</div>
+</article>
+</a>
+<!-- Fazenda Madekin -->
+<a class="card-link" href="fazendas_proprias/fazenda_madekin/index.html" target="_blank">
+<article class="card card-active">
+<div>
+<div class="card-title">Fazenda Madekin</div>
+<div class="card-subtitle">Área própria</div>
+</div>
+</article>
+</a>
+<!-- Fazenda Do Alegre - São Pasqual -->
+<a class="card-link" href="fazendas_proprias/fazenda_do_alegre/index.html" target="_blank">
+<article class="card card-active">
+<div>
+<div class="card-title">Fazenda Do Alegre - São Pasqual</div>
+<div class="card-subtitle">Área própria</div>
+</div>
+</article>
+</a>
 
-    <!-- Áreas Próprias -->
-    <section class="intro section-header">
-      <h2>Áreas próprias</h2>
-      <p>Mapa interativo, uso do solo, hidrografia, projetos de plantio, ortomosaico e documentação fundiária.</p>
-    </section>
-
-    <section class="grid">
-      <!-- Fazenda Aparecidinha -->
-      <a class="card-link" href="fazendas_proprias/fazenda_aparecidinha/index.html" target="_blank">
-        <article class="card card-active">
-          <div>
-            <div class="card-title">Fazenda Aparecidinha</div>
-            <div class="card-subtitle">Área própria</div>
-          </div>
-        </article>
-      </a>
-
-      <!-- Fazenda Madekin -->
-      <a class="card-link" href="fazendas_proprias/fazenda_madekin/index.html" target="_blank">
-        <article class="card card-active">
-          <div>
-            <div class="card-title">Fazenda Madekin</div>
-            <div class="card-subtitle">Área própria</div>
-          </div>
-        </article>
-      </a>
-
-      <!-- Fazenda Do Alegre - São Pasqual -->
-      <a class="card-link" href="fazendas_proprias/fazenda_do_alegre/index.html" target="_blank">
-        <article class="card card-active">
-          <div>
-            <div class="card-title">Fazenda Do Alegre - São Pasqual</div>
-            <div class="card-subtitle">Área própria</div>
-          </div>
-        </article>
-      </a>
-    </section>
-
-    <!-- Áreas Arrendadas -->
-    <section class="intro section-header">
-      <h2>Áreas arrendadas</h2>
-      <p>Mapa interativo, uso do solo, hidrografia, projetos de plantio, ortomosaico e documentação fundiária.</p>
-    </section>
-
-    <section class="grid">
-      <a class="card-link"
-         href="fazendas_arrendadas/fazenda_santo_antonio/index.html"
-         target="_blank">
-        <article class="card card-active">
-          <div>
-            <div class="card-title">Fazenda Santo Antônio</div>
-            <div class="card-subtitle">Área arrendada</div>
-          </div>
-        </article>
-      </a>
-    </section>
-  </main>
-
-  <footer>
+<a class="card-link" href="fazendas_proprias/fazenda_invernadinha/index.html" target="_blank"><article class="card card-active"><div><div class="card-title">Fazenda Invernadinha</div><div class="card-subtitle">Área própria</div></div></article></a></section>
+<!-- Áreas Arrendadas -->
+<section class="intro section-header">
+<h2>Áreas arrendadas</h2>
+<p>Mapa interativo, uso do solo, hidrografia, projetos de plantio, ortomosaico e documentação fundiária.</p>
+</section>
+<section class="grid">
+<a class="card-link" href="fazendas_arrendadas/fazenda_santo_antonio/index.html" target="_blank">
+<article class="card card-active">
+<div>
+<div class="card-title">Fazenda Santo Antônio</div>
+<div class="card-subtitle">Área arrendada</div>
+</div>
+</article>
+</a>
+</section>
+</main>
+<footer>
     EcoMap – Levantamentos aéreos com drones, mapeamentos e soluções ambientais.
   </footer>
 </body>
