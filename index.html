@@ -169,6 +169,53 @@
     .logout-btn:hover{ background: rgba(255,255,255,.18); }
 
 
+
+    /* ===== Busca de propriedades ===== */
+    .search-panel {
+      background: #fff;
+      border-radius: 8px;
+      padding: 14px 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      margin: 14px 0 18px 0;
+    }
+
+    .search-panel label {
+      display: block;
+      font-size: 13px;
+      font-weight: bold;
+      color: #444;
+      margin-bottom: 6px;
+    }
+
+    .search-input {
+      width: 100%;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .search-input:focus {
+      border-color: #1f4b70;
+      box-shadow: 0 0 0 2px rgba(31,75,112,0.12);
+    }
+
+    .search-status {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #666;
+    }
+
+    .search-hidden {
+      display: none !important;
+    }
+
+    .section-hidden-by-search {
+      display: none !important;
+    }
+
+
     @media (max-width: 600px) {
       header {
         padding: 12px 16px;
@@ -182,7 +229,28 @@
         font-size: 18px;
       }
     }
-  </style>
+  
+.header-search{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-left:auto;
+  margin-right:16px;
+}
+.header-search input{
+  width:280px;
+  padding:8px 12px;
+  border-radius:8px;
+  border:1px solid rgba(255,255,255,.45);
+  background:rgba(255,255,255,.15);
+  color:#fff;
+}
+.header-search input::placeholder{color:rgba(255,255,255,.85);}
+@media (max-width:900px){
+ .header-search{order:3;width:100%;margin:10px 0 0;}
+ .header-search input{width:100%;}
+}
+</style>
 <script>
   (function(){
     const KEY_AUTH = "SL_AUTH";
@@ -227,7 +295,7 @@
 <p>Uso do solo, áreas de Pinus, inventário e análises espaciais.</p>
 </div>
 </div>
-<div class="logout-wrap">
+<div class="header-search"><label for="farmSearch" style="display:none">Buscar</label><input autocomplete="off" id="farmSearch" placeholder="Buscar fazenda..." type="search"/></div><div class="logout-wrap">
 <button class="logout-btn" id="btnLogout" title="Sair" type="button">Sair</button>
 </div>
 </header>
@@ -240,6 +308,7 @@
         respectivo mapa detalhado.
       </p>
 </section>
+
 <!-- Resumo Geral -->
 <section class="intro section-header">
 <h2>Resumo geral</h2>
@@ -259,11 +328,11 @@
 </a>
 </section>
 <!-- Áreas Próprias -->
-<section class="intro section-header">
+<section class="intro section-header property-section-header" data-section-title="Áreas próprias">
 <h2>Áreas próprias</h2>
 <p>Mapa interativo, uso do solo, hidrografia, projetos de plantio, ortomosaico e documentação fundiária.</p>
 </section>
-<section class="grid">
+<section class="grid property-grid" data-section-title="Áreas próprias">
 <!-- Fazenda Aparecidinha -->
 <a class="card-link" href="fazendas_proprias/fazenda_aparecidinha/index.html" target="_blank">
 <article class="card card-active">
@@ -293,11 +362,11 @@
 </a>
 <a class="card-link" href="fazendas_proprias/fazenda_invernadinha/index.html" target="_blank"><article class="card card-active"><div><div class="card-title">Fazenda Invernadinha</div><div class="card-subtitle">Área própria</div></div></article></a><a class="card-link" href="fazendas_proprias/fazenda_linha_gaucha_grassi/index.html" target="_blank"><article class="card card-active"><div><div class="card-title">Fazenda Linha Gaúcha - Grassi</div><div class="card-subtitle">Área própria</div></div></article></a><a class="card-link" href="fazendas_proprias/fazenda_colonia_sao_francisco/index.html" target="_blank"><article class="card card-active"><div><div class="card-title">Fazenda Colônia São Francisco</div><div class="card-subtitle">Área própria</div></div></article></a></section>
 <!-- Áreas Arrendadas -->
-<section class="intro section-header">
+<section class="intro section-header property-section-header" data-section-title="Áreas arrendadas">
 <h2>Áreas arrendadas</h2>
 <p>Mapa interativo, uso do solo, hidrografia, projetos de plantio, ortomosaico e documentação fundiária.</p>
 </section>
-<section class="grid">
+<section class="grid property-grid" data-section-title="Áreas arrendadas">
 <a class="card-link" href="fazendas_arrendadas/fazenda_santo_antonio/index.html" target="_blank">
 <article class="card card-active">
 <div>
@@ -311,5 +380,70 @@
 <footer>
     EcoMap – Levantamentos aéreos com drones, mapeamentos e soluções ambientais.
   </footer>
+<script>
+  // ===== Busca de propriedades =====
+  document.addEventListener('DOMContentLoaded', function(){
+    const input = document.getElementById('farmSearch');
+    const status = document.getElementById('farmSearchStatus');
+    const grids = Array.from(document.querySelectorAll('.property-grid'));
+
+    function normalizeText(value){
+      return String(value || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim();
+    }
+
+    function filterFarms(){
+      const query = normalizeText(input ? input.value : '');
+      let visibleCount = 0;
+      let totalCount = 0;
+
+      grids.forEach(function(grid){
+        const cards = Array.from(grid.querySelectorAll('.card-link'));
+        let sectionVisible = false;
+
+        cards.forEach(function(card){
+          totalCount += 1;
+          const searchableText = normalizeText(card.textContent);
+          const matches = !query || searchableText.indexOf(query) !== -1;
+
+          card.classList.toggle('search-hidden', !matches);
+
+          if(matches){
+            visibleCount += 1;
+            sectionVisible = true;
+          }
+        });
+
+        grid.classList.toggle('section-hidden-by-search', !sectionVisible && !!query);
+
+        const sectionTitle = grid.getAttribute('data-section-title');
+        const header = document.querySelector('.property-section-header[data-section-title="' + sectionTitle + '"]');
+        if(header){
+          header.classList.toggle('section-hidden-by-search', !sectionVisible && !!query);
+        }
+      });
+
+      if(status){
+        if(!query){
+          status.textContent = 'Exibindo todas as propriedades.';
+        }else if(visibleCount === 0){
+          status.textContent = 'Nenhuma propriedade encontrada.';
+        }else if(visibleCount === 1){
+          status.textContent = '1 propriedade encontrada.';
+        }else{
+          status.textContent = visibleCount + ' propriedades encontradas.';
+        }
+      }
+    }
+
+    if(input){
+      input.addEventListener('input', filterFarms);
+      filterFarms();
+    }
+  });
+</script>
 </body>
 </html>
