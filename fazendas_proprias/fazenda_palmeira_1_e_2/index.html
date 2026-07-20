@@ -417,6 +417,30 @@
             color:#fff !important;
         }
 
+        /* ===== Contagem de Árvores ===== */
+        .css-contagem-arvores{
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            color: #fff !important;
+            font-size: 13px !important;
+            font-weight: 900 !important;
+            line-height: 1.15 !important;
+            padding: 0 !important;
+            white-space: nowrap;
+            text-align: center;
+            text-shadow:
+                -2px -2px 0 #000,
+                 2px -2px 0 #000,
+                -2px  2px 0 #000,
+                 2px  2px 0 #000,
+                 0   -2px 0 #000,
+                 0    2px 0 #000,
+                -2px  0   0 #000,
+                 2px  0   0 #000;
+        }
+        .css-contagem-arvores:before{ display:none !important; }
+
 </style>
         <title></title>
     </head>
@@ -469,6 +493,16 @@
         <script src="data/Matrcula37183_23.js"></script>
         <script src="data/Matrcula37182_24.js"></script>
         <script src="data/Matricula_dot_25.js"></script>
+        <script src="data/Contagem_Matricula_37.182.js"></script>
+        <script src="data/Contagem_Matricula_37.183.js"></script>
+        <script src="data/Contagem_Matricula_37.811.js"></script>
+        <script src="data/Contagem_Matricula_42.395.js"></script>
+        <script src="data/Contagem_por_matricula.js"></script>
+        <script src="data/Area_Efetiva_37.182.js"></script>
+        <script src="data/Area_Efetiva_37.183.js"></script>
+        <script src="data/Area_Efetiva_37.811.js"></script>
+        <script src="data/Area_Efetiva_42.935.js"></script>
+
         <script>
         var map = L.map('map', {
             zoomControl:false, maxZoom:28, minZoom:1
@@ -2457,6 +2491,137 @@ try{
         });
         bounds_group.addLayer(layer_Matricula_dot_25);
         map.addLayer(layer_Matricula_dot_25);
+
+        /* ====== Contagem de Árvores ====== */
+        map.createPane('pane_ContagemArvores');
+        map.getPane('pane_ContagemArvores').style.zIndex = 426;
+        map.getPane('pane_ContagemArvores').style['mix-blend-mode'] = 'normal';
+
+        // Uma camada Canvas por matrícula. Cada arquivo é um único MultiPoint,
+        // evitando a criação de milhares de objetos Leaflet individuais.
+        var ContagemCanvasLayer = L.Layer.extend({
+            initialize: function(multipoint, options){
+                L.setOptions(this, options || {});
+                this._coords = (multipoint && multipoint.coordinates) ? multipoint.coordinates : [];
+            },
+            onAdd: function(map){
+                this._map = map;
+                this._canvas = L.DomUtil.create('canvas', 'ecomap-contagem-canvas');
+                this._canvas.style.pointerEvents = 'none';
+                this._canvas.style.position = 'absolute';
+                map.getPane('pane_ContagemArvores').appendChild(this._canvas);
+                map.on('moveend zoomend resize', this._redraw, this);
+                this._redraw();
+            },
+            onRemove: function(map){
+                map.off('moveend zoomend resize', this._redraw, this);
+                if(this._canvas && this._canvas.parentNode){
+                    this._canvas.parentNode.removeChild(this._canvas);
+                }
+                this._canvas = null;
+                this._map = null;
+            },
+            _redraw: function(){
+                if(!this._map || !this._canvas) return;
+
+                var size = this._map.getSize();
+                var dpr = window.devicePixelRatio || 1;
+                var topLeft = this._map.containerPointToLayerPoint([0, 0]);
+
+                this._canvas.width = Math.round(size.x * dpr);
+                this._canvas.height = Math.round(size.y * dpr);
+                this._canvas.style.width = size.x + 'px';
+                this._canvas.style.height = size.y + 'px';
+                L.DomUtil.setPosition(this._canvas, topLeft);
+
+                var ctx = this._canvas.getContext('2d');
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                ctx.clearRect(0, 0, size.x, size.y);
+                ctx.fillStyle = '#ff0000';
+
+                // Raio 1,15 px: ponto um pouco maior, sólido e sem transparência.
+                var radius = 2.30;
+                var minX = -radius, minY = -radius;
+                var maxX = size.x + radius, maxY = size.y + radius;
+
+                ctx.beginPath();
+                for(var i = 0; i < this._coords.length; i++){
+                    var c = this._coords[i];
+                    var p = this._map.latLngToLayerPoint([c[1], c[0]]);
+                    var x = p.x - topLeft.x;
+                    var y = p.y - topLeft.y;
+                    if(x < minX || x > maxX || y < minY || y > maxY) continue;
+                    ctx.moveTo(x + radius, y);
+                    ctx.arc(x, y, radius, 0, Math.PI * 2);
+                }
+                ctx.fill();
+            }
+        });
+
+        function criarLayerContagem(multipoint){
+            return new ContagemCanvasLayer(multipoint, {
+                pane: 'pane_ContagemArvores',
+                interactive: false
+            });
+        }
+
+        var layer_Contagem_37182 = criarLayerContagem(json_Contagem_Matricula_37182);
+        var layer_Contagem_37183 = criarLayerContagem(json_Contagem_Matricula_37183);
+        var layer_Contagem_37811 = criarLayerContagem(json_Contagem_Matricula_37811);
+        var layer_Contagem_42395 = criarLayerContagem(json_Contagem_Matricula_42395);
+
+        function styleAreaEfetiva(){
+            return {
+                pane: 'pane_ContagemArvores',
+                color: '#000000',
+                weight: 1,
+                opacity: 0.5,
+                fill: true,
+                fillColor: '#000000',
+                fillOpacity: 0.5,
+                interactive: false
+            };
+        }
+        function criarLayerAreaEfetiva(geojson, nome){
+            return L.geoJson(geojson, {
+                attribution: '',
+                interactive: false,
+                layerName: nome,
+                pane: 'pane_ContagemArvores',
+                style: styleAreaEfetiva
+            });
+        }
+
+        var layer_AreaEfetiva_37182 = criarLayerAreaEfetiva(json_Area_Efetiva_37182, 'layer_AreaEfetiva_37182');
+        var layer_AreaEfetiva_37183 = criarLayerAreaEfetiva(json_Area_Efetiva_37183, 'layer_AreaEfetiva_37183');
+        var layer_AreaEfetiva_37811 = criarLayerAreaEfetiva(json_Area_Efetiva_37811, 'layer_AreaEfetiva_37811');
+        var layer_AreaEfetiva_42935 = criarLayerAreaEfetiva(json_Area_Efetiva_42935, 'layer_AreaEfetiva_42935');
+
+        var layer_Contagem_por_matricula = L.geoJson(json_Contagem_por_matricula, {
+            attribution: '',
+            interactive: false,
+            layerName: 'layer_Contagem_por_matricula',
+            pane: 'pane_ContagemArvores',
+            pointToLayer: function(feature, latlng){
+                return L.circleMarker(latlng, {
+                    pane: 'pane_ContagemArvores',
+                    radius: 0,
+                    stroke: false,
+                    fill: false,
+                    interactive: false
+                });
+            },
+            onEachFeature: function(feature, layer){
+                var p = feature.properties || {};
+                var matricula = p.Matricula || '';
+                var contagem = p.Contagem || '';
+                layer.bindTooltip(
+                    '<div><b>' + matricula + '</b><br>' + contagem + ' árvores</div>',
+                    {permanent: true, direction: 'center', className: 'css-contagem-arvores', opacity: 1}
+                );
+            }
+        });
+
         /* ====== Documentação (PDFs) ====== */
         function createDocLayer(url){
             var g = L.layerGroup();
@@ -2492,10 +2657,25 @@ try{
         ]},
         {label: '<b>Hidrografia</b>', collapsed: true, selectAllCheckbox: true, children: [
             {label: '<img src="legend/CursoDgua_14.png" /> Curso D\'Água', layer: layer_CursoDgua_14},
-            {label: '<img src="legend/Banhado_13.png" /> Banhado', layer: layer_Banhado_13},
             {label: '<img src="legend/APP_12.png" /> APP', layer: layer_APP_12},
             {label: '<img src="legend/APPGeral_11.png" /> APP Geral', layer: layer_APPGeral_11},
             {label: '<img src="legend/Nascente_10.png" /> Nascente', layer: layer_Nascente_10}
+        ]},
+        {label: '<b>Contagem de Árvores</b>', collapsed: true, selectAllCheckbox: true, children: [
+            {label: '<b>Árvores Contadas</b>', layer: layer_Contagem_por_matricula},
+            {label: '<b>Algoritmo</b>', collapsed: true, selectAllCheckbox: true, children: [
+                {label: 'Contagem 37.182', layer: layer_Contagem_37182},
+                {label: 'Contagem 37.183', layer: layer_Contagem_37183},
+                {label: 'Contagem 37.811', layer: layer_Contagem_37811},
+                {label: 'Contagem 42.395', layer: layer_Contagem_42395}
+            ]},
+            {label: '<b>Área Efetiva</b>', collapsed: true, selectAllCheckbox: true, children: [
+                {label: 'Área Efetiva 37.182', layer: layer_AreaEfetiva_37182},
+                {label: 'Área Efetiva 37.183', layer: layer_AreaEfetiva_37183},
+                {label: 'Área Efetiva 37.811', layer: layer_AreaEfetiva_37811},
+                {label: 'Área Efetiva 42.395', layer: layer_AreaEfetiva_42935}
+            ]},
+            {label: '<a class="doc-link" href="tabela_analitica_contagem.html" target="_blank"><b>Tabela Analítica</b></a>', layer: createDocLayer('tabela_analitica_contagem.html')}
         ]},
         {label: '<b>Ortomosaico</b>', collapsed: true, selectAllCheckbox: true, children: [
             {label: "Orto_Segmentada_Palmeira_1_e_2-2-2", layer: layer_Orto_Segmentada_Palmeira_1_e_222_9},
@@ -2629,6 +2809,15 @@ try{
             }
         });
         map.addControl(new Labels123Control());
+
+        // Ao ativar “Árvores Contadas”, desativa automaticamente o botão 123.
+        map.on('overlayadd', function(e){
+            try{
+                if(e.layer === layer_Contagem_por_matricula && matriculasLabelsVisible){
+                    setMatriculasLabelsVisible(false);
+                }
+            }catch(err){}
+        });
 
         // ====== Enquadramento inicial igual ao botão de recentralizar ======
         try {
